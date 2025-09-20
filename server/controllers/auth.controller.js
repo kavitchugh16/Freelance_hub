@@ -3,6 +3,7 @@
 const User = require('../models/user.model.js');
 const Wallet = require('../models/wallet.model.js');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
     try {
@@ -20,7 +21,6 @@ const register = async (req, res) => {
             role,
             country,
             description,
-            // Only add skills if the user is a freelancer
             ...(role === 'freelancer' && { skills })
         });
 
@@ -30,7 +30,7 @@ const register = async (req, res) => {
         // 4. Create a corresponding wallet for the new user
         const newUserWallet = new Wallet({
             user: savedUser._id,
-            balance: 0 // Wallets always start with a zero balance
+            balance: 0
         });
         await newUserWallet.save();
 
@@ -38,7 +38,6 @@ const register = async (req, res) => {
         res.status(201).send("User has been created successfully and wallet initialized.");
 
     } catch (err) {
-        // Handle errors, such as a duplicate username or email
         if (err.code === 11000) {
             return res.status(400).send("Username or email already exists.");
         }
@@ -46,7 +45,45 @@ const register = async (req, res) => {
     }
 };
 
+const login = async (req, res) => {
+    try {
+        // 1. Find the user by their username
+        const user = await User.findOne({ username: req.body.username });
+        if (!user) return res.status(404).send("User not found!");
+
+        // 2. Compare the provided password with the stored hashed password
+        const isPasswordCorrect = bcrypt.compareSync(req.body.password, user.password);
+        if (!isPasswordCorrect) return res.status(400).send("Wrong username or password!");
+
+        // 3. Create a JWT if the password is correct
+        const token = jwt.sign({
+            id: user._id,
+            role: user.role
+        }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        // 4. Separate password from user info and send the response
+        const { password, ...userInfo } = user._doc;
+
+        res.cookie("accessToken", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict"
+        }).status(200).json(userInfo);
+
+    } catch (err) {
+        res.status(500).send("Something went wrong. Please try again.");
+    }
+};
+
+const logout = (req, res) => {
+    res.clearCookie("accessToken", {
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+    }).status(200).send("User has been logged out.");
+};
+
 module.exports = {
-    register
-    // We will add the login and logout functions here later
+    register,
+    login,
+    logout
 };
