@@ -8,9 +8,13 @@ const cookieParser = require('cookie-parser');
 
 // Import ALL your route files
 const authRoute = require('./routes/auth.route.js');
+const userRoute = require('./routes/user.route.js');
 const projectRoute = require('./routes/project.route.js');
 const bidRoute = require('./routes/bid.route.js');
 const milestoneRoute = require('./routes/milestone.route.js');
+const paymentRoute = require('./routes/payment.route.js');
+const reviewRoute = require('./routes/review.route.js');
+
 
 const app = express();
 
@@ -21,9 +25,13 @@ app.use(cookieParser());
 
 // --- API Routes ---
 app.use('/api/auth', authRoute);
+app.use('/api/users', userRoute);
 app.use('/api/projects', projectRoute);
 app.use('/api/bids', bidRoute);
 app.use('/api/milestones', milestoneRoute);
+app.use('/api/payments', paymentRoute);
+app.use('/api/reviews', reviewRoute);
+
 
 const connectDB = async () => {
     try {
