@@ -4,11 +4,9 @@ import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 
 // Import your page components
+import Home from './pages/Home.tsx';
+import BrowseProjects from './pages/BrowseProjects.tsx';
 import NotFound from './pages/NotFound.tsx';
-
-// import Login from './pages/Login.jsx'; // Assuming you will create these
-// import Register from './pages/Register.jsx';
-// import BrowseProjects from './pages/BrowseProjects.jsx'; // This file does not exist yet
 
 // Import your common components
 import Navbar from './components/common/Navbar.tsx';
@@ -31,13 +29,13 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        {/* These routes will be displayed within the Layout */}
-        {/* <Route index element={<Home />} /> */}
-        {/* <Route path="browse-projects" element={<BrowseProjects />} /> */}
+        {/* These routes are now active */}
+        <Route index element={<Home />} />
+        <Route path="browse-projects" element={<BrowseProjects />} />
+        
+        {/* We can add login/register routes later */}
         {/* <Route path="login" element={<Login />} /> */}
         {/* <Route path="register" element={<Register />} /> */}
-        
-        {/* Add other pages here as you create them */}
         
         <Route path="*" element={<NotFound />} />
       </Route>
