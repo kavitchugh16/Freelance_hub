@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'; // Import the AuthProvider
+import { AuthProvider } from './contexts/AuthContext';
 
 // Import pages
 import Home from './pages/Home.tsx';
 import BrowseProjects from './pages/BrowseProjects.tsx';
-import Login from './/pages/Login.tsx'; // Ensure this file exists
+import Login from './pages/Login.tsx';
+import Register from './pages/Register.tsx'; // <-- Import Register
 import NotFound from './pages/NotFound.tsx';
 
 // Import common components
@@ -28,13 +29,13 @@ const Layout = () => {
 
 function App() {
   return (
-    <AuthProvider> {/* Wrap everything with AuthProvider */}
+    <AuthProvider>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="browse-projects" element={<BrowseProjects />} />
           <Route path="login" element={<Login />} />
-          {/* <Route path="register" element={<Register />} /> */}
+          <Route path="register" element={<Register />} /> {/* <-- Activate route */}
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

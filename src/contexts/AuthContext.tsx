@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api'; 
+import api from '../services/api'; // Correct path to the frontend API service
 import type { User } from '../types'; 
 
 // Define the data and functions that the context will provide
@@ -51,7 +51,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('currentUser');
-    // We could also call a backend /logout endpoint here
     navigate('/login');
   };
 

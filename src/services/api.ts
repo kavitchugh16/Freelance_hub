@@ -1,5 +1,3 @@
-// src/services/api.ts
-
 import axios from 'axios';
 
 // Create a pre-configured Axios instance to communicate with the backend
@@ -14,7 +12,7 @@ const apiClient = axios.create({
 // Define a service object that exports functions for each API endpoint
 export const api = {
   login: (credentials: any) => apiClient.post('/auth/login', credentials),
-  // You will add other functions here, e.g., register, logout, getProjects, etc.
+  register: (userData: any) => apiClient.post('/auth/register', userData), // <-- Add this line
 };
 
 export default api;
