@@ -24,15 +24,15 @@ server/
 │ ├── bid.route.js # Routes like /api/bids
 │ ├── milestone.route.js # Routes like /api/milestones/:id/update
 │ └── payment.route.js # Routes for wallet transactions
+│ └── review.route.js # Routes for reviews
 │
 ├── middlewares/
 │ └── authenticate.js # Verifies user tokens for protected routes
 │
 └── server.js # Main server entry file
 
-    client/
 
-└── src/
+└── src/ # FRONTEND
 ├── components/
 │ ├── common/
 │ │ ├── Navbar.jsx # Main site navigation
@@ -60,5 +60,8 @@ server/
 ├── services/
 │ └── api.js # Central file for all backend API calls
 │
+├── types/
+│ └── index.ts 
 ├── App.jsx # Main application component with routing
 └── main.jsx # Entry point of the React app
+└── index.css
