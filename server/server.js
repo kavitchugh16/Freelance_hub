@@ -1,5 +1,3 @@
-
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -31,7 +29,9 @@ app.use('/api/reviews', reviewRoute);
 
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        // Hardcoded MongoDB URI as requested (password '@' encoded as %40)
+        const MONGODB_URI = 'mongodb+srv://ajitesh:dbuser%40123@cluster0.04bem14.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+        await mongoose.connect(MONGODB_URI);
         console.log("MongoDB connected successfully.");
     } catch (err) {
         console.error("MongoDB connection failed:", err.message);

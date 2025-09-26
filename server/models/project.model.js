@@ -1,12 +1,11 @@
-// In server/src/models/project.model.js
-
 const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
     client: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true
     },
     freelancer: {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,30 +14,38 @@ const projectSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 120
     },
     description: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 10000
     },
     skills: {
         type: [String],
-        required: true
+        required: true,
+        validate: v => Array.isArray(v) && v.length > 0
     },
     budget: {
         type: Number,
-        required: true
+        required: true,
+        min: 1
     },
     status: {
         type: String,
         required: true,
         enum: ['open', 'in_progress', 'completed', 'disputed'],
         default: 'open'
-    },
-    // We will link to bids and milestones via their own models later
+    }
 }, {
     timestamps: true,
     versionKey: false
 });
+
+projectSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Project', projectSchema);
