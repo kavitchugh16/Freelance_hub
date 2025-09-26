@@ -1,19 +1,9 @@
-// client/src/components/common/Navbar.jsx
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext'; 
 
 const Navbar = () => {
-  // This is a placeholder. In a real app, you'd use a context or state management
-  // to determine if the user is authenticated.
-  const [isAuthenticated, setIsAuthenticated] = useState(false); 
-  const [userRole, setUserRole] = useState('freelancer'); // or 'client'
-
-  const handleLogout = () => {
-    // Add your logout logic here
-    setIsAuthenticated(false);
-    console.log("User logged out.");
-  };
+  const { user, logout } = useAuth(); 
 
   return (
     <nav className="bg-white shadow-md">
@@ -30,15 +20,13 @@ const Navbar = () => {
                 Browse Projects
               </NavLink>
               
-              {isAuthenticated ? (
+              {user ? ( 
                 <>
-                  <NavLink to={userRole === 'client' ? "/client-dashboard" : "/freelancer-dashboard"} className={({ isActive }) => isActive ? "text-indigo-600 px-3 py-2 rounded-md text-sm font-medium" : "text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"}>
+                  <NavLink to={user.role === 'client' ? "/client-dashboard" : "/freelancer-dashboard"} className={({ isActive }) => isActive ? "text-indigo-600 px-3 py-2 rounded-md text-sm font-medium" : "text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"}>
                     Dashboard
                   </NavLink>
-                   <NavLink to="/wallet" className={({ isActive }) => isActive ? "text-indigo-600 px-3 py-2 rounded-md text-sm font-medium" : "text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"}>
-                    Wallet
-                  </NavLink>
-                  <button onClick={handleLogout} className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                  <span className="text-gray-700 px-3 py-2">Welcome, {user?.username}!</span>
+                  <button onClick={logout} className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                     Logout
                   </button>
                 </>
