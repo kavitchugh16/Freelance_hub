@@ -1,25 +1,28 @@
-// In server/src/models/bid.model.js
-
 const mongoose = require('mongoose');
 
 const bidSchema = new mongoose.Schema({
     project: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
-        required: true
+        required: true,
+        index: true
     },
     freelancer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true
     },
     bidAmount: {
         type: Number,
-        required: true
+        required: true,
+        min: 1
     },
     proposalText: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 5000
     },
     status: {
         type: String,
@@ -30,5 +33,8 @@ const bidSchema = new mongoose.Schema({
     timestamps: true,
     versionKey: false
 });
+
+// Disallow duplicate bids by the same freelancer on the same project
+bidSchema.index({ project: 1, freelancer: 1 }, { unique: true });
 
 module.exports = mongoose.model('Bid', bidSchema);

@@ -1,5 +1,3 @@
-// In server/src/models/wallet.model.js
-
 const mongoose = require('mongoose');
 
 const walletSchema = new mongoose.Schema({
@@ -7,20 +5,23 @@ const walletSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true
+        unique: true,
+        index: true
     },
     balance: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     transactions: [{
-        amount: Number,
+        amount: { type: Number, required: true },
         type: {
             type: String,
-            enum: ['deposit', 'withdrawal', 'milestone_payment_release', 'milestone_payment_refund']
+            enum: ['deposit', 'withdrawal', 'milestone_payment_release', 'milestone_payment_refund'],
+            required: true
         },
-        description: String,
+        description: { type: String, trim: true },
         timestamp: {
             type: Date,
             default: Date.now

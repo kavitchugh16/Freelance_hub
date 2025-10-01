@@ -1,24 +1,29 @@
-// In server/src/models/milestone.model.js
-
 const mongoose = require('mongoose');
 
 const milestoneSchema = new mongoose.Schema({
     project: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
-        required: true
+        required: true,
+        index: true
     },
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 120
     },
     description: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 10000
     },
     amount: {
         type: Number,
-        required: true
+        required: true,
+        min: 1
     },
     status: {
         type: String,
@@ -26,8 +31,7 @@ const milestoneSchema = new mongoose.Schema({
         default: 'pending'
     },
     dueDate: {
-        type: Date,
-        required: false
+        type: Date
     }
 }, {
     timestamps: true,
