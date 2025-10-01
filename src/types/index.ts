@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  name: string;
+  username: string; // Changed 'name' to 'username' to match expected data
   role: 'client' | 'freelancer';
   avatar?: string;
   rating?: number;

@@ -1,42 +1,24 @@
-// In client/src/pages/Login.jsx
-
 import React, { useState } from 'react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import './Login.scss'; // We will create this file next
+import { useAuth } from '../contexts/AuthContext';
+import './Login.scss';
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+    const [error, setError] = useState('');
+    const { login, loading } = useAuth();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        setError('');
         try {
-            const res = await axios.post('http://localhost:8080/api/auth/login', 
-                { username, password },
-                { withCredentials: true } // Important: This allows the browser to send and receive cookies
-            );
-            
-            // Store user data in localStorage for easy access
-            localStorage.setItem('currentUser', JSON.stringify(res.data));
-            
+            await login({ username, password });
             toast.success('Login successful!');
-
-            // Redirect based on user role
-            if (res.data.role === 'client') {
-                navigate('/client-dashboard');
-            } else {
-                navigate('/freelancer-dashboard');
-            }
-
-        } catch (err) {
-            toast.error(err.response.data || 'Login failed.');
-        } finally {
-            setLoading(false);
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials.';
+            setError(errorMessage);
+            toast.error(errorMessage);
         }
     };
 
@@ -46,6 +28,7 @@ const Login = () => {
                 <h1>Sign In</h1>
                 <label htmlFor="username">Username</label>
                 <input
+                    id="username"
                     name="username"
                     type="text"
                     placeholder="johndoe"
@@ -55,11 +38,14 @@ const Login = () => {
 
                 <label htmlFor="password">Password</label>
                 <input
+                    id="password"
                     name="password"
                     type="password"
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
+
+                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
                 <button type="submit" disabled={loading}>
                     {loading ? 'Logging in...' : 'Login'}

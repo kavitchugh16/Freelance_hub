@@ -1,9 +1,10 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+        required: [true, 'Username is required'],
         unique: true,
         trim: true,
         minlength: 3,
@@ -12,7 +13,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
+        required: [true, 'Email is required'],
         unique: true,
         lowercase: true,
         trim: true,
@@ -20,10 +21,9 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: [true, 'Password is required'],
         minlength: 6
     },
-    // The role clearly defines if the user is a Client or a Freelancer.
     role: {
         type: String,
         required: true,
@@ -32,13 +32,11 @@ const userSchema = new mongoose.Schema({
     // Freelancer-specific fields
     skills: {
         type: [String],
-        // This is only required if the role is 'freelancer'
-        required: function() { return this.role === 'freelancer'; },
+        required: function () { return this.role === 'freelancer'; },
         default: undefined
     },
     portfolio: {
         type: String,
-        required: false,
         trim: true
     },
     profilePicture: {
@@ -63,8 +61,17 @@ const userSchema = new mongoose.Schema({
     versionKey: false
 });
 
-// Indexes
+// ✅ Indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ username: 1 }, { unique: true });
 
-module.exports = mongoose.model('User', userSchema);
+// ✅ Hash password before saving
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+const User = mongoose.model('User', userSchema);
+export default User;

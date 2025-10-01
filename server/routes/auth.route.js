@@ -1,7 +1,5 @@
-// In server/src/routes/auth.route.js
-
-const express = require('express');
-const { register, login, logout } = require('../controllers/auth.controller.js');
+import express from 'express';
+import { register, login, logout } from '../controllers/auth.controller.js';
 
 const router = express.Router();
 
@@ -17,4 +15,4 @@ router.post('/login', login);
 // POST /api/auth/logout
 router.post('/logout', logout);
 
-module.exports = router;
+export default router;
