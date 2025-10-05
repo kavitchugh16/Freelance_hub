@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -7,49 +7,114 @@ import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { Upload, User, Briefcase, DollarSign, FileText, Star, Camera } from 'lucide-react';
-import { skillOptions, jobRoleOptions } from '../mock';
+import { Alert, AlertDescription } from './ui/alert';
+import { 
+  Upload, 
+  User, 
+  Briefcase, 
+  DollarSign, 
+  FileText, 
+  Star, 
+  Camera,
+  CheckCircle,
+  AlertCircle,
+  Github,
+  Linkedin,
+  Globe
+} from 'lucide-react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const FreelancerDetails = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     profilePicture: null,
     fullName: '',
-    email: 'freelancer@example.com',
+    email: '',
     skills: [],
-    experience: '',
+    workExperience: '',
     portfolioLinks: {
       github: '',
       linkedin: '',
       website: ''
     },
-    jobRoles: [],
-    bio: '',
-    hourlyRate: ''
+    interestedRoles: [],
+    hourlyRate: '',
+    bio: ''
   });
   
   const [selectedSkills, setSelectedSkills] = useState([]);
-  const [selectedJobRoles, setSelectedJobRoles] = useState([]);
+  const [selectedRoles, setSelectedRoles] = useState([]);
   const [profileProgress, setProfileProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(location.state?.message || '');
+
+  // Skill options
+  const skillOptions = [
+    "React", "Vue.js", "Angular", "Node.js", "Python", "Django", "Flask",
+    "JavaScript", "TypeScript", "HTML/CSS", "PHP", "Laravel", "WordPress",
+    "MongoDB", "PostgreSQL", "MySQL", "UI/UX Design", "Figma", "Photoshop",
+    "Illustrator", "Graphic Design", "Mobile Development", "Flutter", "React Native",
+    "Data Analysis", "Machine Learning", "DevOps", "AWS", "Docker", "Kubernetes",
+    "SEO", "Content Writing", "Digital Marketing", "Social Media Management"
+  ];
+
+  // Job role options
+  const roleOptions = [
+    "Frontend Developer", "Backend Developer", "Full Stack Developer",
+    "UI/UX Designer", "Graphic Designer", "Mobile App Developer",
+    "Data Scientist", "Machine Learning Engineer", "DevOps Engineer",
+    "Content Writer", "SEO Specialist", "Digital Marketer", "Project Manager",
+    "Quality Assurance", "Database Administrator", "System Administrator"
+  ];
+
+  // Load user data from localStorage on component mount
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.name && user.email) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.name,
+        email: user.email
+      }));
+    }
+  }, []);
 
   // Calculate profile completion progress
-  React.useEffect(() => {
+  useEffect(() => {
     const fields = [
       formData.fullName,
+      formData.email,
       selectedSkills.length > 0,
-      formData.experience,
+      formData.workExperience,
       formData.bio,
-      formData.hourlyRate
+      formData.hourlyRate,
+      selectedRoles.length > 0
     ];
     const completed = fields.filter(Boolean).length;
     setProfileProgress((completed / fields.length) * 100);
-  }, [formData, selectedSkills]);
+  }, [formData, selectedSkills, selectedRoles]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+    if (error) setError('');
   };
 
   const handleSkillToggle = (skill) => {
@@ -60,24 +125,92 @@ const FreelancerDetails = () => {
     );
   };
 
-  const handleJobRoleToggle = (role) => {
-    setSelectedJobRoles(prev => 
+  const handleRoleToggle = (role) => {
+    setSelectedRoles(prev => 
       prev.includes(role) 
         ? prev.filter(r => r !== role)
         : [...prev, role]
     );
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (!formData.fullName.trim()) {
+      setError('Full name is required');
+      return false;
+    }
+    if (selectedSkills.length === 0) {
+      setError('Please select at least one skill');
+      return false;
+    }
+    if (!formData.workExperience) {
+      setError('Work experience is required');
+      return false;
+    }
+    if (!formData.bio.trim()) {
+      setError('Bio is required');
+      return false;
+    }
+    if (!formData.hourlyRate) {
+      setError('Hourly rate is required');
+      return false;
+    }
+    if (selectedRoles.length === 0) {
+      setError('Please select at least one interested role');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Save profile data to localStorage for demo
-    const profileData = {
-      ...formData,
-      skills: selectedSkills,
-      jobRoles: selectedJobRoles
-    };
-    localStorage.setItem('freelancerProfile', JSON.stringify(profileData));
-    navigate('/dashboard');
+    
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login first');
+        navigate('/login');
+        return;
+      }
+
+      const profileData = {
+        ...formData,
+        skills: selectedSkills,
+        interestedRoles: selectedRoles
+      };
+
+      const response = await axios.post(
+        `${BACKEND_URL}/api/freelancers`,
+        profileData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Update user profile completion status
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.profileCompleted = true;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        setSuccess('Profile completed successfully! Redirecting to dashboard...');
+        setTimeout(() => {
+          navigate('/freelancer-dashboard');
+        }, 2000);
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Something went wrong. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -86,8 +219,8 @@ const FreelancerDetails = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-blue-900 mb-2">Complete Your Profile</h1>
-            <p className="text-blue-600">Tell us about yourself to get started on Freelance Hub</p>
+            <h1 className="text-4xl font-bold text-blue-900 mb-2">Complete Your Freelancer Profile</h1>
+            <p className="text-blue-600">Tell us about yourself to start finding amazing projects</p>
             <div className="mt-4 max-w-md mx-auto">
               <div className="flex items-center justify-between text-sm text-blue-600 mb-2">
                 <span>Profile Completion</span>
@@ -96,6 +229,20 @@ const FreelancerDetails = () => {
               <Progress value={profileProgress} className="h-2" />
             </div>
           </div>
+
+          {success && (
+            <Alert className="mb-6 border-green-200 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-700">{success}</AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert className="mb-6 border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-700">{error}</AlertDescription>
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Picture & Basic Info */}
@@ -182,14 +329,14 @@ const FreelancerDetails = () => {
                     </div>
                   </div>
 
-                  {/* Experience */}
+                  {/* Work Experience */}
                   <div>
-                    <Label htmlFor="experience" className="text-blue-900 font-medium">Years of Experience *</Label>
+                    <Label htmlFor="workExperience" className="text-blue-900 font-medium">Years of Work Experience *</Label>
                     <Input
-                      id="experience"
+                      id="workExperience"
                       type="number"
-                      value={formData.experience}
-                      onChange={(e) => handleInputChange('experience', e.target.value)}
+                      value={formData.workExperience}
+                      onChange={(e) => handleInputChange('workExperience', e.target.value)}
                       className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500 max-w-xs"
                       placeholder="e.g. 3"
                       min="0"
@@ -214,53 +361,53 @@ const FreelancerDetails = () => {
                   <div>
                     <Label className="text-blue-900 font-medium">Portfolio Links</Label>
                     <div className="mt-2 space-y-3">
-                      <Input
-                        type="url"
-                        value={formData.portfolioLinks.github}
-                        onChange={(e) => handleInputChange('portfolioLinks', {
-                          ...formData.portfolioLinks,
-                          github: e.target.value
-                        })}
-                        className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="GitHub Profile URL"
-                      />
-                      <Input
-                        type="url"
-                        value={formData.portfolioLinks.linkedin}
-                        onChange={(e) => handleInputChange('portfolioLinks', {
-                          ...formData.portfolioLinks,
-                          linkedin: e.target.value
-                        })}
-                        className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="LinkedIn Profile URL"
-                      />
-                      <Input
-                        type="url"
-                        value={formData.portfolioLinks.website}
-                        onChange={(e) => handleInputChange('portfolioLinks', {
-                          ...formData.portfolioLinks,
-                          website: e.target.value
-                        })}
-                        className="border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Personal Website URL"
-                      />
+                      <div className="relative">
+                        <Github className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                        <Input
+                          type="url"
+                          value={formData.portfolioLinks.github}
+                          onChange={(e) => handleInputChange('portfolioLinks.github', e.target.value)}
+                          className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="GitHub Profile URL"
+                        />
+                      </div>
+                      <div className="relative">
+                        <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                        <Input
+                          type="url"
+                          value={formData.portfolioLinks.linkedin}
+                          onChange={(e) => handleInputChange('portfolioLinks.linkedin', e.target.value)}
+                          className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="LinkedIn Profile URL"
+                        />
+                      </div>
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                        <Input
+                          type="url"
+                          value={formData.portfolioLinks.website}
+                          onChange={(e) => handleInputChange('portfolioLinks.website', e.target.value)}
+                          className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Personal Website URL"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Job Roles */}
+                  {/* Interested Roles */}
                   <div>
-                    <Label className="text-blue-900 font-medium">Interested Job Roles</Label>
+                    <Label className="text-blue-900 font-medium">Interested Job Roles *</Label>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      {jobRoleOptions.map(role => (
+                      {roleOptions.map(role => (
                         <Badge
                           key={role}
-                          variant={selectedJobRoles.includes(role) ? "default" : "outline"}
+                          variant={selectedRoles.includes(role) ? "default" : "outline"}
                           className={`cursor-pointer transition-all ${
-                            selectedJobRoles.includes(role)
+                            selectedRoles.includes(role)
                               ? 'bg-blue-600 hover:bg-blue-700 text-white'
                               : 'border-blue-300 text-blue-700 hover:bg-blue-50'
                           }`}
-                          onClick={() => handleJobRoleToggle(role)}
+                          onClick={() => handleRoleToggle(role)}
                         >
                           {role}
                         </Badge>
@@ -283,7 +430,7 @@ const FreelancerDetails = () => {
                 <div className="space-y-6">
                   {/* Bio */}
                   <div>
-                    <Label htmlFor="bio" className="text-blue-900 font-medium">Short Bio / About Me *</Label>
+                    <Label htmlFor="bio" className="text-blue-900 font-medium">Short Bio *</Label>
                     <Textarea
                       id="bio"
                       value={formData.bio}
@@ -297,7 +444,7 @@ const FreelancerDetails = () => {
 
                   {/* Hourly Rate */}
                   <div>
-                    <Label htmlFor="hourlyRate" className="text-blue-900 font-medium">Hourly Rate *</Label>
+                    <Label htmlFor="hourlyRate" className="text-blue-900 font-medium">Hourly Rate / Expected Salary *</Label>
                     <div className="mt-1 flex items-center">
                       <DollarSign className="h-5 w-5 text-blue-600 mr-1" />
                       <Input
@@ -322,9 +469,16 @@ const FreelancerDetails = () => {
               <Button 
                 type="submit" 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg hover:shadow-xl transition-all"
-                disabled={profileProgress < 80}
+                disabled={loading || profileProgress < 80}
               >
-                Save Profile & Continue
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Completing Profile...
+                  </div>
+                ) : (
+                  'Complete Profile & Continue'
+                )}
               </Button>
             </div>
           </form>

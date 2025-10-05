@@ -1,59 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Alert, AlertDescription } from './ui/alert';
 import { 
   Building, 
-  User, 
-  Briefcase, 
-  DollarSign, 
-  Globe, 
-  Users,
+  Upload, 
   Camera,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  FileText,
+  Hash
 } from 'lucide-react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const ClientDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
     companyName: '',
-    contactPerson: '',
+    companyId: '',
     industry: '',
-    companySize: '',
-    website: '',
-    description: '',
-    projectTypes: [],
-    budget: '',
-    location: ''
+    companyDescription: '',
+    address: '',
+    companyLogo: null
   });
   
-  const [selectedProjectTypes, setSelectedProjectTypes] = useState([]);
   const [profileProgress, setProfileProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(location.state?.message || '');
 
+  // Industry options
+  const industries = [
+    "Technology", "Healthcare", "Finance", "Education", "E-commerce", 
+    "Marketing & Advertising", "Real Estate", "Manufacturing", "Retail",
+    "Entertainment", "Non-profit", "Consulting", "Agriculture", "Energy",
+    "Transportation", "Construction", "Food & Beverage", "Other"
+  ];
+
   // Calculate profile completion progress
-  React.useEffect(() => {
+  useEffect(() => {
     const fields = [
       formData.companyName,
-      formData.contactPerson,
       formData.industry,
-      formData.companySize,
-      formData.description,
-      selectedProjectTypes.length > 0,
-      formData.budget
+      formData.companyDescription,
+      formData.address
     ];
-    const completed = fields.filter(Boolean).length;
+    const completed = fields.filter(field => field && field.trim()).length;
     setProfileProgress((completed / fields.length) * 100);
-  }, [formData, selectedProjectTypes]);
+  }, [formData]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -63,84 +66,76 @@ const ClientDetails = () => {
     if (error) setError('');
   };
 
-  const handleProjectTypeToggle = (type) => {
-    setSelectedProjectTypes(prev => 
-      prev.includes(type) 
-        ? prev.filter(t => t !== type)
-        : [...prev, type]
-    );
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Basic validation
+  const validateForm = () => {
     if (!formData.companyName.trim()) {
       setError('Company name is required');
-      return;
-    }
-    if (!formData.contactPerson.trim()) {
-      setError('Contact person name is required');
-      return;
+      return false;
     }
     if (!formData.industry) {
       setError('Please select your industry');
-      return;
+      return false;
     }
-    if (!formData.description.trim()) {
+    if (!formData.companyDescription.trim()) {
       setError('Company description is required');
-      return;
+      return false;
     }
-
-    // Save profile data
-    const profileData = {
-      ...formData,
-      projectTypes: selectedProjectTypes,
-      profileCompleted: true
-    };
-    localStorage.setItem('clientProfile', JSON.stringify(profileData));
-    
-    // Update user profile completion status
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    user.profileCompleted = true;
-    localStorage.setItem('user', JSON.stringify(user));
-
-    setSuccess('Profile completed successfully! Redirecting to dashboard...');
-    setTimeout(() => {
-      navigate('/client-dashboard');
-    }, 2000);
+    if (!formData.address.trim()) {
+      setError('Address/City is required');
+      return false;
+    }
+    return true;
   };
 
-  const industries = [
-    "Technology", "Healthcare", "Finance", "Education", "E-commerce", 
-    "Marketing & Advertising", "Real Estate", "Manufacturing", "Retail",
-    "Entertainment", "Non-profit", "Consulting", "Other"
-  ];
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
 
-  const companySizes = [
-    "1-10 employees (Startup)",
-    "11-50 employees (Small)",
-    "51-200 employees (Medium)",
-    "201-1000 employees (Large)",
-    "1000+ employees (Enterprise)"
-  ];
+    setLoading(true);
+    setError('');
 
-  const projectTypeOptions = [
-    "Web Development", "Mobile App Development", "UI/UX Design", "Graphic Design",
-    "Content Writing", "Digital Marketing", "SEO", "Data Analysis", "Machine Learning",
-    "Software Development", "Database Management", "DevOps", "Quality Assurance",
-    "Project Management", "Business Consulting", "Legal Services"
-  ];
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login first');
+        navigate('/login');
+        return;
+      }
 
-  const budgetRanges = [
-    "Under $1,000", "$1,000 - $5,000", "$5,000 - $10,000", 
-    "$10,000 - $50,000", "$50,000 - $100,000", "Over $100,000"
-  ];
+      const response = await axios.post(
+        `${BACKEND_URL}/api/clients`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        // Update user profile completion status
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.profileCompleted = true;
+        localStorage.setItem('user', JSON.stringify(user));
+
+        setSuccess('Profile completed successfully! Redirecting to dashboard...');
+        setTimeout(() => {
+          navigate('/client-dashboard');
+        }, 2000);
+      }
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Something went wrong. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-blue-900 mb-2">Complete Your Company Profile</h1>
@@ -169,6 +164,28 @@ const ClientDetails = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Company Logo */}
+            <Card className="border-blue-200 shadow-md">
+              <CardHeader className="bg-blue-50 border-b border-blue-200">
+                <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <Building className="h-5 w-5" />
+                  Company Logo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="flex flex-col items-center">
+                  <div className="w-32 h-32 bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg flex items-center justify-center hover:border-blue-400 transition-colors cursor-pointer">
+                    <Camera className="h-8 w-8 text-blue-400" />
+                  </div>
+                  <Button type="button" variant="outline" className="mt-4 text-blue-600 border-blue-300 hover:bg-blue-50">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Company Logo
+                  </Button>
+                  <p className="text-sm text-blue-500 mt-2">Optional - You can add this later</p>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Company Information */}
             <Card className="border-blue-200 shadow-md">
               <CardHeader className="bg-blue-50 border-b border-blue-200">
@@ -178,31 +195,36 @@ const ClientDetails = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="companyName" className="text-blue-900 font-medium">Company Name *</Label>
-                    <Input
-                      id="companyName"
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => handleInputChange('companyName', e.target.value)}
-                      className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Enter your company name"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="contactPerson" className="text-blue-900 font-medium">Contact Person *</Label>
-                    <Input
-                      id="contactPerson"
-                      type="text"
-                      value={formData.contactPerson}
-                      onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                      className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="Your name"
-                      required
-                    />
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="companyName" className="text-blue-900 font-medium">Company Name *</Label>
+                      <Input
+                        id="companyName"
+                        type="text"
+                        value={formData.companyName}
+                        onChange={(e) => handleInputChange('companyName', e.target.value)}
+                        className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Enter your company name"
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="companyId" className="text-blue-900 font-medium">Company ID</Label>
+                      <div className="relative mt-1">
+                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                        <Input
+                          id="companyId"
+                          type="text"
+                          value={formData.companyId}
+                          onChange={(e) => handleInputChange('companyId', e.target.value)}
+                          className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                          placeholder="Optional company ID"
+                        />
+                      </div>
+                      <p className="text-sm text-blue-500 mt-1">Optional - Registration number or tax ID</p>
+                    </div>
                   </div>
 
                   <div>
@@ -222,104 +244,47 @@ const ClientDetails = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="companySize" className="text-blue-900 font-medium">Company Size</Label>
-                    <select
-                      id="companySize"
-                      value={formData.companySize}
-                      onChange={(e) => handleInputChange('companySize', e.target.value)}
-                      className="mt-1 w-full border border-blue-200 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-blue-500"
-                    >
-                      <option value="">Select company size</option>
-                      {companySizes.map(size => (
-                        <option key={size} value={size}>{size}</option>
-                      ))}
-                    </select>
+                    <Label htmlFor="address" className="text-blue-900 font-medium">Address / City *</Label>
+                    <div className="relative mt-1">
+                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 h-4 w-4" />
+                      <Input
+                        id="address"
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        className="pl-10 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="City, State, Country"
+                        required
+                      />
+                    </div>
                   </div>
-
-                  <div>
-                    <Label htmlFor="website" className="text-blue-900 font-medium">Website</Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      value={formData.website}
-                      onChange={(e) => handleInputChange('website', e.target.value)}
-                      className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="https://www.yourcompany.com"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="location" className="text-blue-900 font-medium">Location</Label>
-                    <Input
-                      id="location"
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                      placeholder="City, Country"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <Label htmlFor="description" className="text-blue-900 font-medium">Company Description *</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Tell us about your company, its mission, and what makes it unique..."
-                    rows={4}
-                    required
-                  />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Project Preferences */}
+            {/* Company Description */}
             <Card className="border-blue-200 shadow-md">
               <CardHeader className="bg-blue-50 border-b border-blue-200">
                 <CardTitle className="flex items-center gap-2 text-blue-900">
-                  <Briefcase className="h-5 w-5" />
-                  Project Preferences
+                  <FileText className="h-5 w-5" />
+                  Company Description
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-blue-900 font-medium">Types of Projects You'll Post</Label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {projectTypeOptions.map(type => (
-                        <Badge
-                          key={type}
-                          variant={selectedProjectTypes.includes(type) ? "default" : "outline"}
-                          className={`cursor-pointer transition-all ${
-                            selectedProjectTypes.includes(type)
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'border-blue-300 text-blue-700 hover:bg-blue-50'
-                          }`}
-                          onClick={() => handleProjectTypeToggle(type)}
-                        >
-                          {type}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="budget" className="text-blue-900 font-medium">Typical Project Budget Range</Label>
-                    <select
-                      id="budget"
-                      value={formData.budget}
-                      onChange={(e) => handleInputChange('budget', e.target.value)}
-                      className="mt-1 w-full border border-blue-200 rounded-md px-3 py-2 focus:border-blue-500 focus:ring-blue-500 max-w-xs"
-                    >
-                      <option value="">Select budget range</option>
-                      {budgetRanges.map(range => (
-                        <option key={range} value={range}>{range}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
+                  <Label htmlFor="companyDescription" className="text-blue-900 font-medium">Tell us about your company *</Label>
+                  <Textarea
+                    id="companyDescription"
+                    value={formData.companyDescription}
+                    onChange={(e) => handleInputChange('companyDescription', e.target.value)}
+                    className="mt-1 border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Describe your company's mission, values, and what kind of projects you typically work on..."
+                    rows={5}
+                    required
+                  />
+                  <p className="text-sm text-blue-500 mt-2">
+                    This helps freelancers understand your company culture and project types
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -329,9 +294,16 @@ const ClientDetails = () => {
               <Button 
                 type="submit" 
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg font-medium shadow-lg hover:shadow-xl transition-all"
-                disabled={profileProgress < 70}
+                disabled={loading || profileProgress < 75}
               >
-                Complete Profile & Continue
+                {loading ? (
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Completing Profile...
+                  </div>
+                ) : (
+                  'Complete Profile & Continue'
+                )}
               </Button>
             </div>
           </form>
