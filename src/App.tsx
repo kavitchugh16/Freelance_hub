@@ -1,31 +1,27 @@
-// src/App.tsx
-
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 
-// Import pages
-import Home from './pages/Home.tsx';
-import BrowseProjects from './pages/BrowseProjects.tsx';
-import Login from './pages/Login.tsx';
-import Register from './pages/Register.tsx'; // <-- Import Register
-import NotFound from './pages/NotFound.tsx';
+// Pages
+import Home from './pages/Home';
+import BrowseProjects from './pages/BrowseProjects';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import NotFound from './pages/NotFound';
 
-// Import common components
-import Navbar from './components/common/Navbar.tsx';
-import Footer from './components/common/Footer.tsx';
+// Components
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 
-const Layout = () => {
-  return (
-    <div>
-      <Navbar />
-      <main className="container mx-auto py-8" style={{ minHeight: '80vh' }}>
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
-  );
-};
+const Layout = () => (
+  <div>
+    <Navbar />
+    <main className="container mx-auto py-8" style={{ minHeight: '80vh' }}>
+      <Outlet />
+    </main>
+    <Footer />
+  </div>
+);
 
 function App() {
   return (
@@ -35,7 +31,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="browse-projects" element={<BrowseProjects />} />
           <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} /> {/* <-- Activate route */}
+          <Route path="register" element={<Register />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

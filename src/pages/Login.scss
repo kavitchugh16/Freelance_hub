@@ -1,50 +1,76 @@
+/* src/pages/Login.scss */
 
 .login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f5f7fa; // light background
+  font-family: Arial, sans-serif;
+
+  form {
+    background-color: #fff; // white card
+    padding: 2rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 50px 0;
+    flex-direction: column;
 
-    form {
-        width: 400px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-
-        h1 {
-            color: gray;
-            margin-bottom: 20px;
-        }
-
-        label {
-            color: gray;
-            font-size: 18px;
-        }
-
-        input {
-            padding: 15px;
-            border: 1px solid rgb(216, 214, 214);
-            border-radius: 5px;
-        }
-
-        button {
-            border: none;
-            padding: 15px;
-            color: white;
-            font-weight: 500;
-            font-size: 18px;
-            background-color: #1dbf73;
-            cursor: pointer;
-            border-radius: 5px;
-            
-            &:hover {
-                background-color: #19a362;
-            }
-
-            &:disabled {
-                background-color: #cccccc;
-                cursor: not-allowed;
-            }
-        }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #333;
     }
+
+    label {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #555;
+    }
+
+    input {
+      padding: 0.75rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      width: 100%;
+
+      &:focus {
+        outline: none;
+        border-color: #4f46e5; // indigo
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+      }
+    }
+
+    .text-red-500 {
+      color: #e11d48; // red
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      background-color: #4f46e5; // indigo
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: #4338ca;
+      }
+
+      &:disabled {
+        background-color: #a5b4fc;
+        cursor: not-allowed;
+      }
+    }
+  }
 }
