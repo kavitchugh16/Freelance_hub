@@ -195,6 +195,176 @@ async def login(login_data: UserLogin):
         logging.error(f"Login error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# Freelancer Profile Models
+class FreelancerProfile(BaseModel):
+    profilePicture: Optional[str] = None
+    fullName: str
+    email: str
+    skills: List[str]
+    workExperience: str
+    portfolioLinks: dict = {}
+    interestedRoles: List[str]
+    hourlyRate: str
+    bio: str
+
+class ClientProfile(BaseModel):
+    companyName: str
+    companyId: Optional[str] = None
+    industry: str
+    companyDescription: str
+    address: str
+    companyLogo: Optional[str] = None
+
+# Freelancer Routes
+@api_router.post("/freelancers")
+async def create_freelancer_profile(
+    profile_data: FreelancerProfile, 
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # Verify user is a freelancer
+        if current_user.get('role') != 'freelancer':
+            raise HTTPException(status_code=403, detail="Only freelancers can create freelancer profiles")
+
+        # Check if profile already exists
+        existing_profile = await db.freelancer_profiles.find_one({"userId": current_user['id']})
+        if existing_profile:
+            raise HTTPException(status_code=400, detail="Freelancer profile already exists")
+
+        # Create profile
+        profile_dict = profile_data.dict()
+        profile_dict.update({
+            "id": str(uuid.uuid4()),
+            "userId": current_user['id'],
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        })
+
+        # Save to database
+        result = await db.freelancer_profiles.insert_one(profile_dict)
+        
+        if result.inserted_id:
+            # Update user's profileCompleted status
+            await db.users.update_one(
+                {"id": current_user['id']},
+                {"$set": {"profileCompleted": True, "updatedAt": datetime.utcnow()}}
+            )
+            
+            return {
+                "success": True,
+                "message": "Freelancer profile created successfully",
+                "data": {
+                    "profileId": profile_dict['id']
+                }
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create profile")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Freelancer profile creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/freelancers/me")
+async def get_freelancer_profile(current_user: dict = Depends(get_current_user)):
+    try:
+        if current_user.get('role') != 'freelancer':
+            raise HTTPException(status_code=403, detail="Only freelancers can access this endpoint")
+
+        profile = await db.freelancer_profiles.find_one({"userId": current_user['id']})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Freelancer profile not found")
+
+        # Remove MongoDB ObjectId
+        profile.pop('_id', None)
+        
+        return {
+            "success": True,
+            "data": {"profile": profile}
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Get freelancer profile error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Client Routes
+@api_router.post("/clients")
+async def create_client_profile(
+    profile_data: ClientProfile, 
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        # Verify user is a client
+        if current_user.get('role') != 'client':
+            raise HTTPException(status_code=403, detail="Only clients can create client profiles")
+
+        # Check if profile already exists
+        existing_profile = await db.client_profiles.find_one({"userId": current_user['id']})
+        if existing_profile:
+            raise HTTPException(status_code=400, detail="Client profile already exists")
+
+        # Create profile
+        profile_dict = profile_data.dict()
+        profile_dict.update({
+            "id": str(uuid.uuid4()),
+            "userId": current_user['id'],
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        })
+
+        # Save to database
+        result = await db.client_profiles.insert_one(profile_dict)
+        
+        if result.inserted_id:
+            # Update user's profileCompleted status
+            await db.users.update_one(
+                {"id": current_user['id']},
+                {"$set": {"profileCompleted": True, "updatedAt": datetime.utcnow()}}
+            )
+            
+            return {
+                "success": True,
+                "message": "Client profile created successfully",
+                "data": {
+                    "profileId": profile_dict['id']
+                }
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create profile")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Client profile creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@api_router.get("/clients/me")
+async def get_client_profile(current_user: dict = Depends(get_current_user)):
+    try:
+        if current_user.get('role') != 'client':
+            raise HTTPException(status_code=403, detail="Only clients can access this endpoint")
+
+        profile = await db.client_profiles.find_one({"userId": current_user['id']})
+        if not profile:
+            raise HTTPException(status_code=404, detail="Client profile not found")
+
+        # Remove MongoDB ObjectId
+        profile.pop('_id', None)
+        
+        return {
+            "success": True,
+            "data": {"profile": profile}
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Get client profile error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Protected route example
 @api_router.get("/auth/me")
 async def get_current_user_info(current_user: dict = Depends(get_current_user)):
