@@ -1,34 +1,15 @@
+// server/routes/proposal.route.js
 const express = require('express');
 const router = express.Router();
 const proposalCtrl = require('../controllers/proposal.controller');
-const { authenticate, restrictTo } = require('../middlewares/authenticate'); // correct import
+const { authenticate, restrictTo } = require('../middlewares/authenticate'); 
 
-// -----------------------------
-// 🔒 PROTECTED ROUTES
-// -----------------------------
+// 1. Create Proposal (Bid)
+router.post('/', authenticate, restrictTo('freelancer'), proposalCtrl.createProposal);
 
-// FREELANCER — Create proposal for a project
-router.post(
-  '/:projectId',
-  authenticate,
-  restrictTo('freelancer'),
-  proposalCtrl.createProposal
-);
+// 2. Get proposals for a specific project (Client side)
+router.get('/project/:projectId', authenticate, restrictTo('client'), proposalCtrl.getProposalsByProject);
 
-// CLIENT — Get proposals for a specific project
-router.get(
-  '/project/:projectId',
-  authenticate,
-  restrictTo('client'),
-  proposalCtrl.getProposalsForProject
-);
-
-// FREELANCER — Get all proposals submitted by logged-in freelancer
-router.get(
-  '/me',
-  authenticate,
-  restrictTo('freelancer'),
-  proposalCtrl.getProposalsByFreelancer
-);
+// ... add other proposal routes here (e.g., /my-proposals)
 
 module.exports = router;

@@ -10,7 +10,7 @@ const proposalSchema = new Schema({
     type: {
       type: String,
       enum: ['fixed-price','hourly'],
-      required: true
+      required: true    
     },
     amount: { type: Number, required: true },
     currency: { type: String, default: 'USD' }

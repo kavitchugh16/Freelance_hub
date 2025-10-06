@@ -3,11 +3,38 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const notificationSchema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true }, // who gets notified
-  title: { type: String, required: true },
-  message: { type: String, required: true },
-  data: { type: Schema.Types.Mixed, default: {} }, // optional payload (e.g., { projectId, proposalId })
-  read: { type: Boolean, default: false }
+    // User who receives the notification (the Client)
+    recipientId: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true 
+    },
+    // Reference to the Proposal that triggered the notification
+    proposalId: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Proposal' 
+    },
+    // Reference to the Project
+    projectId: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Project', 
+        required: true 
+    },
+    // Custom message
+    message: { 
+        type: String, 
+        required: true 
+    },
+    // Notification type (e.g., bid, accepted, message)
+    type: { 
+        type: String, 
+        enum: ['new_bid', 'proposal_accepted', 'project_update'], 
+        required: true 
+    },
+    isRead: { 
+        type: Boolean, 
+        default: false 
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Notification', notificationSchema);

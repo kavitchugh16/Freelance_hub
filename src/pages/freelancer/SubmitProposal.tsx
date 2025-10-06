@@ -1,84 +1,148 @@
+// src/pages/freelancer/SubmitProposal.tsx
 import React, { useState } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate, useParams } from "react-router-dom";
 
 const SubmitProposal: React.FC = () => {
-  const { id } = useParams();
-  const [form, setForm] = useState({
-    coverLetter: "",
-    bidType: "fixed-price",
-    bidAmount: "",
-    estimatedCompletionDate: "",
-  });
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { projectId } = useParams<{ projectId: string }>(); // Get project ID from URL
 
-  const handleChange = (e: any) => setForm({ ...form, [e.target.name]: e.target.value });
+    const [form, setForm] = useState({
+        coverLetter: "",
+        bidType: "fixed-price",
+        bidAmount: "",
+        estimatedCompletionDate: "",
+        proposedApproach: "",
+    });
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
 
-    try {
-      const token = localStorage.getItem("accessToken");
-      const res = await axios.post(
-        "http://localhost:8080/api/proposals",
-        {
-          projectId: id,
-          coverLetter: form.coverLetter,
-          bid: {
-            type: form.bidType,
-            amount: Number(form.bidAmount),
-            currency: "USD",
-          },
-          estimatedCompletionDate: new Date(form.estimatedCompletionDate),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage("");
+
+        if (!projectId) {
+            setMessage("Error: Project ID is missing.");
+            setLoading(false);
+            return;
         }
-      );
 
-      alert("✅ Proposal submitted successfully!");
-      console.log(res.data);
-      setForm({ coverLetter: "", bidType: "fixed-price", bidAmount: "", estimatedCompletionDate: "" });
-    } catch (err: any) {
-      alert("❌ " + (err.response?.data?.message || "Error submitting proposal"));
+        try {
+            const payload = {
+                projectId,
+                coverLetter: form.coverLetter,
+                bid: {
+                    type: form.bidType,
+                    amount: Number(form.bidAmount),
+                    currency: "USD",
+                },
+                estimatedCompletionDate: form.estimatedCompletionDate,
+                proposedApproach: form.proposedApproach,
+            };
+
+            const res = await axios.post("http://localhost:8080/api/proposals", payload);
+
+            setMessage("✅ " + res.data.message);
+            // Optionally redirect to the freelancer's proposal list or dashboard
+            setTimeout(() => navigate('/freelancer/dashboard'), 3000); 
+
+        } catch (err: any) {
+            console.error("Proposal submission error:", err);
+            setMessage("❌ " + (err.response?.data?.message || "Failed to submit proposal."));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (user?.role !== "freelancer") {
+        return <h2 className="text-center text-red-600">Access Denied. Only freelancers can submit proposals.</h2>;
     }
-  };
 
-  return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-bold mb-4 text-green-700">Submit Proposal</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <textarea
-          name="coverLetter"
-          value={form.coverLetter}
-          onChange={handleChange}
-          placeholder="Cover Letter"
-          className="border w-full p-2 rounded-md"
-          required
-        />
-        <input
-          name="bidAmount"
-          type="number"
-          value={form.bidAmount}
-          onChange={handleChange}
-          placeholder="Bid Amount"
-          className="border w-full p-2 rounded-md"
-          required
-        />
-        <input
-          name="estimatedCompletionDate"
-          type="date"
-          value={form.estimatedCompletionDate}
-          onChange={handleChange}
-          className="border w-full p-2 rounded-md"
-          required
-        />
-        <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 w-full">
-          Submit Proposal
-        </button>
-      </form>
-    </div>
-  );
+    return (
+        <div className="max-w-3xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg">
+            <h2 className="text-3xl font-bold mb-6 text-indigo-700">Submit Proposal for Project {projectId}</h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+                
+                {/* Bid Details */}
+                <div className="flex space-x-4">
+                    <select
+                        name="bidType"
+                        value={form.bidType}
+                        onChange={handleChange}
+                        className="border p-3 rounded-md w-1/3"
+                        required
+                    >
+                        <option value="fixed-price">Fixed Price</option>
+                        <option value="hourly">Hourly</option>
+                    </select>
+                    <input
+                        type="number"
+                        name="bidAmount"
+                        value={form.bidAmount}
+                        onChange={handleChange}
+                        placeholder="Bid Amount (USD)"
+                        min="1"
+                        step="1"
+                        className="border p-3 rounded-md w-2/3"
+                        required
+                    />
+                </div>
+
+                {/* Cover Letter */}
+                <textarea
+                    name="coverLetter"
+                    value={form.coverLetter}
+                    onChange={handleChange}
+                    placeholder="Cover Letter (Why are you the best fit?)"
+                    rows={5}
+                    maxLength={3000}
+                    className="border w-full p-3 rounded-md"
+                    required
+                />
+
+                {/* Estimated Date */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Completion Date</label>
+                    <input
+                        type="date"
+                        name="estimatedCompletionDate"
+                        value={form.estimatedCompletionDate}
+                        onChange={handleChange}
+                        className="border w-full p-3 rounded-md"
+                        required
+                    />
+                </div>
+
+                {/* Proposed Approach */}
+                <textarea
+                    name="proposedApproach"
+                    value={form.proposedApproach}
+                    onChange={handleChange}
+                    placeholder="Briefly describe your proposed approach (optional)"
+                    rows={3}
+                    maxLength={2000}
+                    className="border w-full p-3 rounded-md"
+                />
+
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-indigo-600 text-white px-4 py-3 rounded-md hover:bg-indigo-700 w-full disabled:bg-indigo-300"
+                >
+                    {loading ? 'Submitting...' : 'Submit Proposal (Bid)'}
+                </button>
+            </form>
+            {message && <p className={`mt-4 text-center ${message.startsWith('❌') ? 'text-red-500' : 'text-green-600'}`}>{message}</p>}
+        </div>
+    );
 };
 
 export default SubmitProposal;

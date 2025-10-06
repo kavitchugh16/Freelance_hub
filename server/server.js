@@ -10,6 +10,7 @@ const authRoute = require('./routes/auth.route.js');
 const projectRoute = require('./routes/project.route.js');
 const proposalRoute = require('./routes/proposal.route.js');
 const walletRoute = require('./routes/wallet.route.js');
+const notificationRoute = require('./routes/notification.route.js');
 
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoute);
 app.use('/api/projects', projectRoute);
 app.use('/api/proposals', proposalRoute);
 app.use('/api/wallet', walletRoute); 
+app.use('/api/notifications', notificationRoute); 
 
 
 

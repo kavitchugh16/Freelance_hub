@@ -1,102 +1,90 @@
+// server/controllers/proposal.controller.js
 const Proposal = require('../models/Proposal');
 const Project = require('../models/Project');
-const Notification = require('../models/Notification');
-const mongoose = require('mongoose');
+const Notification = require('../models/Notification'); // ⬅️ NEW Import
 
 /**
- * @desc    Create a new proposal (Freelancer only)
- * @route   POST /api/proposals/:projectId
- * @access  Private (Freelancer)
+ * @desc   Freelancer submits a new proposal/bid for a project
+ * @route POST /api/proposals
+ * @access Private (Freelancer)
  */
 exports.createProposal = async (req, res) => {
-  try {
-    if (req.user.role !== 'freelancer') {
-      return res.status(403).json({ success: false, message: 'Only freelancers can submit proposals.' });
+    try {
+        const freelancerId = req.user._id;
+        const { projectId, coverLetter, bid, estimatedCompletionDate, proposedApproach } = req.body;
+        
+        if (req.user.role !== 'freelancer') {
+            return res.status(403).json({ success: false, message: 'Only freelancers can submit proposals.' });
+        }
+
+        // 1. Validate Project existence and status
+        const project = await Project.findById(projectId);
+        if (!project || project.status !== 'open') {
+            return res.status(404).json({ success: false, message: 'Project not found or not open for bidding.' });
+        }
+
+        // 2. Create the Proposal (Allowing multiple bids from the same freelancer)
+        const proposalData = {
+            ...req.body,
+            freelancerId: freelancerId,
+            status: 'submitted'
+        };
+
+        const proposal = await Proposal.create(proposalData);
+
+        // 3. Update the Project to track the new proposal (if necessary, assuming Project model has a 'proposals' array)
+        if (!project.proposals.includes(proposal._id)) {
+             project.proposals.push(proposal._id);
+             await project.save();
+        }
+
+        // 4. Create Notification for the Client
+        const clientMessage = `New bid received on your project: "${project.title}". Bid Amount: ${bid.amount} ${bid.currency}.`;
+
+        await Notification.create({
+            recipientId: project.clientId, // The project creator is the client
+            proposalId: proposal._id,
+            projectId: projectId,
+            message: clientMessage,
+            type: 'new_bid'
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Proposal submitted successfully. Client notified.',
+            proposal,
+        });
+
+    } catch (err) {
+        console.error('❌ createProposal error:', err);
+        res.status(500).json({ success: false, message: 'Server error while submitting proposal.' });
     }
-
-    const { projectId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ success: false, message: 'Invalid project ID.' });
-    }
-
-    const project = await Project.findById(projectId);
-    if (!project) return res.status(404).json({ success: false, message: 'Project not found.' });
-
-    const proposalData = {
-      projectId,
-      freelancerId: req.user._id,
-      coverLetter: req.body.coverLetter,
-      bid: req.body.bid,
-      estimatedCompletionDate: req.body.estimatedCompletionDate,
-      proposedApproach: req.body.proposedApproach || '',
-      relevantPortfolioItems: req.body.relevantPortfolioItems || [],
-      clarifyingQuestions: req.body.clarifyingQuestions || [],
-    };
-
-    const proposal = await Proposal.create(proposalData);
-
-    // Add to project's proposals array
-    project.proposals.push(proposal._id);
-    await project.save();
-
-    // Create a notification for the client
-    await Notification.create({
-      userId: project.clientId,
-      title: `New bid for "${project.title}"`,
-      message: `${req.user.username} submitted a bid of ${proposal.bid.amount} ${proposal.bid.currency}`,
-      data: { projectId: project._id, proposalId: proposal._id },
-    });
-
-    res.status(201).json({ success: true, message: 'Proposal submitted successfully.', proposal });
-  } catch (err) {
-    console.error('❌ createProposal error:', err);
-    res.status(500).json({ success: false, message: 'Server error while submitting proposal.' });
-  }
 };
+
 
 /**
- * @desc    Get all proposals for a specific project
- * @route   GET /api/proposals/project/:projectId
- * @access  Private (Client or Freelancer)
+ * @desc   Get all proposals for a specific project (Client view)
+ * @route GET /api/proposals/project/:projectId
+ * @access Private (Client)
  */
-exports.getProposalsForProject = async (req, res) => {
-  try {
-    const { projectId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return res.status(400).json({ success: false, message: 'Invalid project ID.' });
+exports.getProposalsByProject = async (req, res) => {
+    try {
+        const projectId = req.params.projectId;
+        
+        // Ensure the authenticated user owns the project
+        const project = await Project.findById(projectId);
+        if (!project || project.clientId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view proposals for this project.' });
+        }
+
+        const proposals = await Proposal.find({ projectId })
+            .populate('freelancerId', 'username email skills country'); // Get freelancer details
+
+        res.status(200).json({ success: true, proposals });
+    } catch (err) {
+        console.error('❌ getProposalsByProject error:', err);
+        res.status(500).json({ success: false, message: 'Server error while fetching proposals.' });
     }
-
-    const proposals = await Proposal.find({ projectId })
-      .populate('freelancerId', 'username email portfolio skills')
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({ success: true, count: proposals.length, proposals });
-  } catch (err) {
-    console.error('❌ getProposalsForProject error:', err);
-    res.status(500).json({ success: false, message: 'Server error while fetching proposals.' });
-  }
 };
 
-/**
- * @desc    Get all proposals submitted by logged-in freelancer
- * @route   GET /api/proposals/my
- * @access  Private (Freelancer)
- */
-exports.getProposalsByFreelancer = async (req, res) => {
-  try {
-    if (req.user.role !== 'freelancer') {
-      return res.status(403).json({ success: false, message: 'Access denied. Only freelancers allowed.' });
-    }
-
-    const freelancerId = req.user._id;
-
-    const proposals = await Proposal.find({ freelancerId })
-      .populate('projectId', 'title description category')
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({ success: true, count: proposals.length, proposals });
-  } catch (err) {
-    console.error('❌ getProposalsByFreelancer error:', err);
-    res.status(500).json({ success: false, message: 'Server error while fetching your proposals.' });
-  }
-};
+// You'll need other functions like getMyProposals, updateProposal, etc.
