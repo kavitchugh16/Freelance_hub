@@ -1,3 +1,4 @@
+// src/pages/Register.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -22,7 +23,9 @@ const Register = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -32,7 +35,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const payload: any = {
+      const payload = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -40,19 +43,18 @@ const Register = () => {
         country: formData.country,
         description: formData.description,
         company: formData.role === 'client' ? formData.company : '',
-        portfolio: formData.role === 'freelancer' ? formData.portfolio : '',
         skills:
           formData.role === 'freelancer'
-            ? formData.skills.split(',').map((s) => s.trim()).filter(Boolean)
+            ? formData.skills.split(',').map((s) => s.trim())
             : [],
+        portfolio: formData.role === 'freelancer' ? formData.portfolio : '',
       };
 
-      await register(payload);
-
-      toast.success('Registration successful! Please log in.');
+      const res = await register(payload); // returns res.data
+      toast.success(res.message || 'Registration successful!');
       navigate('/login');
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Registration failed.');
+      toast.error(err.response?.data?.message || err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ const Register = () => {
         <label>Password</label>
         <input name="password" type="password" value={formData.password} onChange={handleChange} required />
 
-        <label>I want to:</label>
+        <label>Role</label>
         <select name="role" value={formData.role} onChange={handleChange}>
           <option value="client">Hire for a project</option>
           <option value="freelancer">Work as a freelancer</option>
@@ -86,7 +88,7 @@ const Register = () => {
 
         {formData.role === 'client' && (
           <>
-            <label>Company Name</label>
+            <label>Company</label>
             <input name="company" type="text" value={formData.company} onChange={handleChange} required />
           </>
         )}

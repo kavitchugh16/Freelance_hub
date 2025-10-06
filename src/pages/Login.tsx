@@ -7,7 +7,6 @@ import './Login.scss';
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
 
@@ -17,18 +16,28 @@ const Login = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await login(formData);
-      toast.success('Login successful!');
-      navigate('/');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Login failed.');
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const user = await login(formData); // Now login returns user
+
+    if (!user) {
+      toast.error('User does not exist.');
+      return;
     }
-  };
+
+    toast.success('Login successful!');
+
+    // Redirect based on role
+    if (user.role === 'client') navigate('/client/dashboard');
+    else if (user.role === 'freelancer') navigate('/freelancer/dashboard');
+    else navigate('/');
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || err.message || 'Login failed.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="login">
