@@ -1,30 +1,52 @@
-// In server/src/middlewares/authenticate.js
-
+// server/src/middlewares/authenticate.js
 const jwt = require('jsonwebtoken');
 
+// Use environment variable or default secret
+const JWT_SECRET = process.env.JWT_SECRET || 'secretkey';
+
+/**
+ * 🔒 Authentication Middleware
+ * Verifies JWT token from cookies or Authorization header
+ */
 const authenticate = (req, res, next) => {
-    // 1. Get the token from the cookies
-    const token = req.cookies.accessToken;
+  try {
+    // Token can come from cookies or "Authorization: Bearer <token>" header
+    const token = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
 
-    // 2. If no token exists, deny access
     if (!token) {
-        return res.status(401).send("Access Denied: No token provided.");
+      return res.status(401).json({ message: 'Access Denied: No token provided.' });
     }
 
-    // 3. If a token exists, verify it
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify token
+    const payload = jwt.verify(token, JWT_SECRET);
 
-        // 4. If verification is successful, add user info to the request object
-        req.userId = payload.id;
-        req.userRole = payload.role;
+    // Attach user info to request object
+    req.user = {
+      _id: payload.id,
+      role: payload.role,
+      username: payload.username || null,
+      email: payload.email || null,
+    };
 
-        // 5. Pass control to the next function (the controller)
-        next();
-    } catch (err) {
-        // If verification fails (e.g., token is invalid or expired)
-        return res.status(403).send("Access Denied: Invalid token.");
-    }
+    next();
+  } catch (err) {
+    console.error('JWT verification failed:', err.message);
+    return res.status(403).json({ message: 'Access Denied: Invalid or expired token.' });
+  }
 };
 
-module.exports = authenticate;
+/**
+ * 🔑 Role-Based Authorization Middleware
+ * Usage: restrictTo('client', 'admin')
+ */
+const restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Access denied. Insufficient permissions.' });
+    }
+    next();
+  };
+};
+
+// Export both middlewares
+module.exports = { authenticate, restrictTo };
