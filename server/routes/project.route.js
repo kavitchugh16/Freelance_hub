@@ -1,14 +1,15 @@
-
 const express = require('express');
-const { createProject, getProjects, getProjectById, acceptBid } = require('../controllers/project.controller.js'); 
-const authenticate = require('../middlewares/authenticate.js');
-
 const router = express.Router();
+const projectCtrl = require('../controllers/project.controller');
+const { authenticate, restrictTo } = require('../middlewares/authenticate'); // ✅ correct
 
-router.get('/', getProjects);
-router.get('/:id', getProjectById);
+// Public routes
+router.get('/', projectCtrl.getAllProjects);
+router.get('/:id', projectCtrl.getProjectById);
 
-router.post('/', authenticate, createProject);
-router.patch('/:projectId/accept/:bidId', authenticate, acceptBid);
+// Protected routes
+router.post('/', authenticate, restrictTo('client'), projectCtrl.createProject);
+router.post('/:id/accept-proposal', authenticate, restrictTo('client'), projectCtrl.acceptProposal);
+// Add other routes similarly...
 
 module.exports = router;

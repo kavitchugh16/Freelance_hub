@@ -1,11 +1,9 @@
-// src/App.tsx
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Pages
 import Home from './pages/Home';
-import BrowseProjects from './pages/BrowseProjects';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
@@ -13,10 +11,13 @@ import NotFound from './pages/NotFound';
 // Client pages
 import ClientDashboard from './pages/client/Dashboard';
 import ClientProfile from './pages/client/Profile';
+import CreateProject from './pages/client/CreateProject';
+import ProjectList from './pages/client/ProjectList';
 
 // Freelancer pages
 import FreelancerDashboard from './pages/freelancer/Dashboard';
 import FreelancerProfile from './pages/freelancer/Profile';
+import BrowseProjects from './pages/freelancer/BrowseProjects';
 
 // Components
 import Navbar from './components/common/Navbar';
@@ -38,17 +39,19 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="browse-projects" element={<BrowseProjects />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
 
           {/* Client routes */}
           <Route path="client/dashboard" element={<ClientDashboard />} />
           <Route path="client/profile" element={<ClientProfile />} />
+          <Route path="client/projects/create" element={<CreateProject />} />
+          <Route path="client/projects" element={<ProjectList />} />
 
           {/* Freelancer routes */}
           <Route path="freelancer/dashboard" element={<FreelancerDashboard />} />
           <Route path="freelancer/profile" element={<FreelancerProfile />} />
+          <Route path="freelancer/browse-projects" element={<BrowseProjects />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>

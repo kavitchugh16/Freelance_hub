@@ -24,102 +24,97 @@ const Navbar = () => {
           </div>
 
           {/* Menu */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-center space-x-4">
-              {/* Always visible */}
-              <NavLink
-                to="/browse-projects"
-                className={({ isActive }) =>
-                  isActive
-                    ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                    : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                }
-              >
-                Browse Projects
-              </NavLink>
+          <div className="hidden md:flex space-x-4 items-center">
+            {!user && (
+              <>
+                <NavLink
+                  to="/"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                  }
+                >
+                  Home
+                </NavLink>
+                <NavLink
+                  to="/login"
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                  }
+                >
+                  Login
+                </NavLink>
+                <Link
+                  to="/register"
+                  className="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
 
-              {/* Logged-in links */}
-              {user ? (
-                <>
-                  {user.role === 'client' && (
-                    <>
-                      <NavLink
-                        to="/client/dashboard"
-                        className={({ isActive }) =>
-                          isActive
-                            ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                            : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                        }
-                      >
-                        Dashboard
-                      </NavLink>
-                      <NavLink
-                        to="/client/profile"
-                        className={({ isActive }) =>
-                          isActive
-                            ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                            : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                        }
-                      >
-                        Profile
-                      </NavLink>
-                    </>
-                  )}
+            {user && (
+              <>
+                {user.role === 'client' ? (
+                  <>
+                    <NavLink
+                      to="/client/dashboard"
+                      className={({ isActive }) =>
+                        isActive
+                          ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                          : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+                    <NavLink
+                      to="/client/profile"
+                      className={({ isActive }) =>
+                        isActive
+                          ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                          : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      }
+                    >
+                      Profile
+                    </NavLink>
+                  </>
+                ) : (
+                  <>
+                    <NavLink
+                      to="/freelancer/dashboard"
+                      className={({ isActive }) =>
+                        isActive
+                          ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                          : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+                    <NavLink
+                      to="/freelancer/profile"
+                      className={({ isActive }) =>
+                        isActive
+                          ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                          : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
+                      }
+                    >
+                      Profile
+                    </NavLink>
+                  </>
+                )}
 
-                  {user.role === 'freelancer' && (
-                    <>
-                      <NavLink
-                        to="/freelancer/dashboard"
-                        className={({ isActive }) =>
-                          isActive
-                            ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                            : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                        }
-                      >
-                        Dashboard
-                      </NavLink>
-                      <NavLink
-                        to="/freelancer/profile"
-                        className={({ isActive }) =>
-                          isActive
-                            ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                            : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                        }
-                      >
-                        Profile
-                      </NavLink>
-                    </>
-                  )}
-
-                  <span className="text-gray-700 px-3 py-2">Hi, {user.username}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <NavLink
-                    to="/login"
-                    className={({ isActive }) =>
-                      isActive
-                        ? 'text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                        : 'text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium'
-                    }
-                  >
-                    Login
-                  </NavLink>
-                  <Link
-                    to="/register"
-                    className="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
+                <span className="text-gray-700 px-3 py-2">Hi, {user.username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
