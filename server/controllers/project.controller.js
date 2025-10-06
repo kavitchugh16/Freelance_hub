@@ -1,94 +1,132 @@
-// In server/src/controllers/project.controller.js
+const mongoose = require('mongoose');
+const Project = require('../models/Project');
+const Proposal = require('../models/Proposal');
 
-const Project = require('../models/project.model.js');
-const Bid = require('../models/bid.model.js'); // We need this for the acceptBid function
-
-const createProject = async (req, res) => {
-    try {
-        if (req.userRole !== 'client') {
-            return res.status(403).send("Forbidden: Only clients can post new projects.");
-        }
-        const { title, description, skills, budget } = req.body;
-        const newProject = new Project({
-            client: req.userId,
-            title,
-            description,
-            skills,
-            budget
-        });
-        const savedProject = await newProject.save();
-        res.status(201).json(savedProject);
-    } catch (err) {
-        res.status(500).send("Something went wrong while creating the project.");
+/**
+ * @desc    Create a new project (Client only)
+ * @route   POST /api/projects
+ * @access  Private (Client)
+ */
+exports.createProject = async (req, res) => {
+  try {
+    if (req.user.role !== 'client') {
+      return res.status(403).json({ success: false, message: 'Only clients can create projects.' });
     }
+
+    const projectData = {
+      ...req.body,
+      clientId: req.user._id,
+    };
+
+    const project = await Project.create(projectData);
+
+    res.status(201).json({
+      success: true,
+      message: 'Project created successfully!',
+      project,
+    });
+  } catch (err) {
+    console.error('❌ createProject error:', err);
+    res.status(500).json({ success: false, message: 'Server error while creating project.' });
+  }
 };
 
-const getProjects = async (req, res) => {
-    try {
-        const filters = { status: 'open' };
-        if (req.query.search) {
-            filters.$or = [
-                { title: { $regex: req.query.search, $options: 'i' } },
-                { description: { $regex: req.query.search, $options: 'i' } }
-            ];
-        }
-        if (req.query.skills) {
-            filters.skills = { $in: req.query.skills.split(',') };
-        }
-        const projects = await Project.find(filters).populate('client', 'username profilePicture');
-        res.status(200).json(projects);
-    } catch (err) {
-        res.status(500).send("Something went wrong while fetching projects.");
-    }
+/**
+ * @desc    Get all projects (Public)
+ * @route   GET /api/projects
+ * @access  Public
+ */
+exports.getAllProjects = async (req, res) => {
+  try {
+    const filters = {};
+    if (req.query.category) filters.category = req.query.category;
+    if (req.query.status) filters.status = req.query.status;
+    if (req.query.skill) filters.requiredSkills = { $in: [req.query.skill] };
+    if (req.query.search) filters.$text = { $search: req.query.search };
+
+    const projects = await Project.find(filters)
+      .populate('clientId', 'username email company')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: projects.length,
+      projects,
+    });
+  } catch (err) {
+    console.error('❌ getAllProjects error:', err);
+    res.status(500).json({ success: false, message: 'Server error while fetching projects.' });
+  }
 };
 
-const getProjectById = async (req, res) => {
-    try {
-        const project = await Project.findById(req.params.id).populate('client', 'username profilePicture country');
-        if (!project) {
-            return res.status(404).send("Project not found.");
-        }
-        res.status(200).json(project);
-    } catch (err) {
-        res.status(500).send("Something went wrong while fetching the project.");
+/**
+ * @desc    Get single project details
+ * @route   GET /api/projects/:id
+ * @access  Public
+ */
+exports.getProjectById = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('clientId', 'username email company')
+      .populate({
+        path: 'proposals',
+        populate: {
+          path: 'freelancerId',
+          select: 'username email skills',
+        },
+      });
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
     }
+
+    res.status(200).json({ success: true, project });
+  } catch (err) {
+    console.error('❌ getProjectById error:', err);
+    res.status(500).json({ success: false, message: 'Server error while fetching project details.' });
+  }
 };
 
-const acceptBid = async (req, res) => {
-    try {
-        const { projectId, bidId } = req.params;
-        const project = await Project.findById(projectId);
+/**
+ * @desc    Client accepts a proposal
+ * @route   POST /api/projects/:id/accept-proposal
+ * @access  Private (Client)
+ */
+exports.acceptProposal = async (req, res) => {
+  try {
+    const { proposalId } = req.body;
+    const project = await Project.findById(req.params.id);
 
-        if (!project) return res.status(404).send("Project not found.");
-        
-        if (project.client.toString() !== req.userId) {
-            return res.status(403).send("Forbidden: You are not the owner of this project.");
-        }
-        
-        const acceptedBid = await Bid.findById(bidId);
-        if (!acceptedBid) return res.status(404).send("Bid not found.");
-
-        project.freelancer = acceptedBid.freelancer;
-        project.status = 'in_progress';
-        await project.save();
-
-        acceptedBid.status = 'accepted';
-        await acceptedBid.save();
-
-        await Bid.updateMany(
-            { project: projectId, _id: { $ne: bidId } },
-            { status: 'rejected' }
-        );
-
-        res.status(200).json(project);
-    } catch (err) {
-        res.status(500).send("Something went wrong while accepting the bid.");
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
     }
-};
 
-module.exports = {
-    createProject,
-    getProjects,
-    getProjectById,
-    acceptBid
+    // Ensure client owns the project
+    if (!project.clientId.equals(mongoose.Types.ObjectId(req.user._id))) {
+      return res.status(403).json({ success: false, message: 'Not authorized to accept proposals for this project.' });
+    }
+
+    const proposal = await Proposal.findById(proposalId);
+    if (!proposal) {
+      return res.status(404).json({ success: false, message: 'Proposal not found.' });
+    }
+
+    // Update proposal status
+    proposal.status = 'accepted';
+    await proposal.save();
+
+    // Update project status
+    project.status = 'in-progress';
+    await project.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Proposal accepted successfully.',
+      project,
+      proposal,
+    });
+  } catch (err) {
+    console.error('❌ acceptProposal error:', err);
+    res.status(500).json({ success: false, message: 'Server error while accepting proposal.' });
+  }
 };

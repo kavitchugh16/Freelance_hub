@@ -1,58 +1,59 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import './Login.scss';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const { login, loading } = useAuth();
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ username: '', password: '' });
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        try {
-            await login({ username, password });
-            toast.success('Login successful!');
-        } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'Login failed. Please check your credentials.';
-            setError(errorMessage);
-            toast.error(errorMessage);
-        }
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    return (
-        <div className="login">
-            <form onSubmit={handleSubmit}>
-                <h1>Sign In</h1>
-                <label htmlFor="username">Username</label>
-                <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    placeholder="johndoe"
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                />
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const user = await login(formData); // Now login returns user
 
-                <label htmlFor="password">Password</label>
-                <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
+    if (!user) {
+      toast.error('User does not exist.');
+      return;
+    }
 
-                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+    toast.success('Login successful!');
 
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
-            </form>
-        </div>
-    );
+    // Redirect based on role
+    if (user.role === 'client') navigate('/client/dashboard');
+    else if (user.role === 'freelancer') navigate('/freelancer/dashboard');
+    else navigate('/');
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || err.message || 'Login failed.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  return (
+    <div className="login">
+      <form onSubmit={handleSubmit}>
+        <h1>Sign In</h1>
+
+        <label>Username</label>
+        <input name="username" type="text" value={formData.username} onChange={handleChange} required />
+
+        <label>Password</label>
+        <input name="password" type="password" value={formData.password} onChange={handleChange} required />
+
+        <button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+      </form>
+    </div>
+  );
 };
 
 export default Login;
