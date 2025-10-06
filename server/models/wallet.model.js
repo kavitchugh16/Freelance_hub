@@ -1,3 +1,4 @@
+// server/models/Wallet.js (Your Schema)
 const mongoose = require('mongoose');
 
 const walletSchema = new mongoose.Schema({

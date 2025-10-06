@@ -6,6 +6,13 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, required: true, enum: ['client', 'freelancer'] },
+
+    walletBalance: {
+        type: Number,
+        default: 0,
+        min: [0, 'Wallet balance cannot be negative.'], // Enforce balance >= 0
+        required: true
+    },
     
     // Freelancer-specific fields
     skills: { type: [String], default: [] }, 
