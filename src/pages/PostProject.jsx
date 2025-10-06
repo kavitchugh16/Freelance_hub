@@ -1,6 +1,9 @@
+// client/src/pages/PostProject.jsx
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { X, Plus } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8080/api';
 
@@ -32,7 +35,6 @@ const PostProject = () => {
         setSkills(Array.isArray(p.skills) ? p.skills : []);
         setSkillsInput('');
         setBudget(String(p.budget || ''));
-        // deadline is not in current schema; leave blank
       } catch (_) {
         // ignore if project not found
       } finally {
@@ -74,7 +76,7 @@ const PostProject = () => {
         description: description.trim(),
         skills,
         budget: Number(budget),
-        deadline: deadline || undefined // model ignores unknown fields
+        deadline: deadline || undefined
       };
 
       await axios.post(`${API_BASE}/projects`, payload, {
@@ -91,59 +93,78 @@ const PostProject = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white border rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{projectId ? 'Edit Project' : 'Post a New Project'}</h1>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white py-10">
+      <div className="max-w-3xl mx-auto px-4">
+        <div className="bg-white shadow-lg rounded-2xl p-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-blue-900 mb-6">
+            {projectId ? 'Edit Project' : 'Post a New Project'}
+          </h1>
 
           {error && (
-            <div className="mt-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>
+            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm flex items-center gap-2">
+              <X className="w-4 h-4" /> {error}
+            </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Project Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
               <input
                 type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-3 shadow-sm transition"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter project title"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
               <textarea
                 rows={5}
-                className="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-3 shadow-sm transition"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the project in detail"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Required Skills</label>
-              <div className="mt-1 flex gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Required Skills *</label>
+              <div className="flex gap-2 items-center">
                 <input
                   type="text"
                   placeholder="e.g. React, Node.js"
-                  className="flex-1 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  className="flex-1 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-2 transition"
                   value={skillsInput}
                   onChange={(e) => setSkillsInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkillFromInput(); } }}
                 />
-                <button type="button" className="px-3 py-2 rounded-md bg-gray-100 border text-sm" onClick={addSkillFromInput}>Add</button>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition"
+                  onClick={addSkillFromInput}
+                >
+                  <Plus className="w-4 h-4" /> Add
+                </button>
               </div>
               {skills.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {skills.map(s => (
-                    <span key={s} className="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <span
+                      key={s}
+                      className="flex items-center gap-1 text-sm px-3 py-1 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200"
+                    >
                       {s}
-                      <button type="button" className="text-indigo-700/70 hover:text-indigo-900" onClick={() => removeSkill(s)}>×</button>
+                      <button
+                        type="button"
+                        className="hover:text-indigo-900"
+                        onClick={() => removeSkill(s)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </span>
                   ))}
                 </div>
@@ -152,32 +173,43 @@ const PostProject = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Budget</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Budget *</label>
                 <input
                   type="number"
                   min="1"
-                  className="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-3 shadow-sm transition"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
+                  placeholder="Enter budget in $"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Deadline</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
                 <input
                   type="date"
-                  className="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 p-3 shadow-sm transition"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="pt-2">
-              <button type="submit" disabled={loading} className="inline-flex items-center px-5 py-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60">
-                {loading ? 'Saving...' : (projectId ? 'Save Changes' : 'Post Project')}
+            <div className="flex flex-wrap gap-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 inline-flex justify-center items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition disabled:opacity-60"
+              >
+                {loading ? 'Saving...' : projectId ? 'Save Changes' : 'Post Project'}
               </button>
-              <button type="button" className="ml-3 inline-flex items-center px-5 py-2.5 rounded-md border bg-white hover:bg-gray-50" onClick={() => navigate(-1)}>Cancel</button>
+              <button
+                type="button"
+                className="flex-1 inline-flex justify-center items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>
@@ -187,5 +219,3 @@ const PostProject = () => {
 };
 
 export default PostProject;
-
-
