@@ -13,13 +13,15 @@ import ClientDashboard from './pages/client/Dashboard';
 import ClientProfile from './pages/client/Profile';
 import CreateProject from './pages/client/CreateProject';
 import ProjectList from './pages/client/ProjectList';
-import ClientWallet from './pages/client/Wallet'; // ⬅️ NEW: Import Client Wallet Component
+import ClientWallet from './pages/client/Wallet'; 
+import ClientNotifications from './pages/client/Notifications'; // ⬅️ ADDED: Client Notifications Component
 
 // Freelancer pages
 import FreelancerDashboard from './pages/freelancer/Dashboard';
 import FreelancerProfile from './pages/freelancer/Profile';
 import BrowseProjects from './pages/freelancer/BrowseProjects';
-import FreelancerWallet from './pages/freelancer/Wallet'; // ⬅️ NEW: Import Freelancer Wallet Component
+import FreelancerWallet from './pages/freelancer/Wallet'; 
+import SubmitProposal from './pages/freelancer/SubmitProposal'; // ⬅️ ADDED: Submit Proposal Component
 
 // Components
 import Navbar from './components/common/Navbar';
@@ -49,13 +51,15 @@ function App() {
           <Route path="client/profile" element={<ClientProfile />} />
           <Route path="client/projects/create" element={<CreateProject />} />
           <Route path="client/projects" element={<ProjectList />} />
-          <Route path="client/wallet" element={<ClientWallet />} /> {/* ⬅️ NEW: Client Wallet Route */}
+          <Route path="client/wallet" element={<ClientWallet />} />
+          <Route path="client/notifications" element={<ClientNotifications />} /> {/* ⬅️ ADDED: Notifications Route */}
 
           {/* Freelancer routes */}
           <Route path="freelancer/dashboard" element={<FreelancerDashboard />} />
           <Route path="freelancer/profile" element={<FreelancerProfile />} />
           <Route path="freelancer/browse-projects" element={<BrowseProjects />} />
-          <Route path="freelancer/wallet" element={<FreelancerWallet />} /> {/* ⬅️ NEW: Freelancer Wallet Route */}
+          <Route path="freelancer/wallet" element={<FreelancerWallet />} />
+          <Route path="freelancer/submit-proposal/:projectId" element={<SubmitProposal />} /> {/* ⬅️ ADDED: Proposal Submission Route */}
 
           <Route path="*" element={<NotFound />} />
         </Route>
