@@ -1,18 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const projectCtrl = require('../controllers/project.controller');
-const { authenticate, restrictTo } = require('../middlewares/authenticate');
+const { authenticate, restrictTo } = require('../middlewares/authenticate'); 
+const {
+  createProject,
+  getProjects,
+  getProjectById,
+  acceptProposal,
+  getFreelancerProjects
+} = require('../controllers/project.controller.js');
 
-// Public routes
-router.get('/', projectCtrl.getAllProjects);
-router.get('/:id', projectCtrl.getProjectById);
+console.log('--- project.route.js loaded ---');
+console.log('typeof authenticate:', typeof authenticate);
+console.log('typeof createProject:', typeof createProject);
+console.log('typeof getProjects:', typeof getProjects);
+console.log('typeof getProjectById:', typeof getProjectById);
 
-// Protected routes
-router.post('/', authenticate, restrictTo('client'), projectCtrl.createProject);
-router.post('/:id/accept-proposal', authenticate, restrictTo('client'), projectCtrl.acceptProposal);
+// Project routes
+router.post('/', authenticate, restrictTo('client'), createProject);
+router.get('/', authenticate, getProjects);
+router.get('/:id', authenticate, getProjectById);
 
-// ✅ ADDED: New route for a freelancer to get their assigned projects
-router.get('/my-projects/freelancer', authenticate, restrictTo('freelancer'), projectCtrl.getFreelancerProjects);
-
+// Extra routes
+router.post('/:id/accept-proposal', authenticate, restrictTo('client'), acceptProposal);
+router.get('/freelancer', authenticate, restrictTo('freelancer'), getFreelancerProjects);
 
 module.exports = router;

@@ -19,10 +19,13 @@ const router = express.Router();
 const proposalCtrl = require('../controllers/proposal.controller');
 const { authenticate, restrictTo } = require('../middlewares/authenticate'); 
 
+// Submit a proposal (freelancer only)
 router.post('/', authenticate, restrictTo('freelancer'), proposalCtrl.createProposal);
+
+// Get all proposals for a project (client only)
 router.get('/project/:projectId', authenticate, restrictTo('client'), proposalCtrl.getProposalsByProject);
 
-// ✅ ADDED: New route to approve a proposal directly from a notification
+// Approve a proposal (client only)
 router.post('/:proposalId/approve', authenticate, restrictTo('client'), proposalCtrl.approveProposal);
 
 module.exports = router;

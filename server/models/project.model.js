@@ -48,4 +48,4 @@ const projectSchema = new mongoose.Schema({
 
 projectSchema.index({ status: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Project', projectSchema);
+module.exports = mongoose.models.Project || mongoose.model("Project", projectSchema);
