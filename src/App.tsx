@@ -79,7 +79,6 @@
 // }
 
 // export default App;
-
 import React from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -105,6 +104,8 @@ import FreelancerProfile from './pages/freelancer/Profile';
 import BrowseProjects from './pages/freelancer/BrowseProjects';
 import FreelancerWallet from './pages/freelancer/Wallet'; 
 import SubmitProposal from './pages/freelancer/SubmitProposal';
+import FreelancerProjects from './pages/freelancer/FreelancerProjects';
+import FreelancerNotifications from './pages/freelancer/Notifications';
 
 // Shared Project pages
 import ProjectWorkspace from './pages/ProjectWorkspace'; 
@@ -146,6 +147,9 @@ function App() {
           <Route path="freelancer/browse-projects" element={<BrowseProjects />} />
           <Route path="freelancer/wallet" element={<FreelancerWallet />} />
           <Route path="freelancer/submit-proposal/:projectId" element={<SubmitProposal />} />
+          <Route path="freelancer/my-projects" element={<FreelancerProjects />} />
+          {/* THIS IS THE LINE THAT FIXES YOUR 404 ERROR */}
+          <Route path="freelancer/notifications" element={<FreelancerNotifications />} />
 
           {/* Shared routes for specific projects */}
           <Route path="project/:projectId/proposals" element={<ViewProposals />} />
