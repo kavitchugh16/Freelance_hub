@@ -173,6 +173,7 @@ const Project = require('../models/Project');
 const Proposal = require('../models/Proposal');
 const Milestone = require('../models/milestone.model');
 
+// --- createProject function is unchanged ---
 exports.createProject = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
@@ -194,6 +195,7 @@ exports.createProject = async (req, res) => {
   }
 };
 
+// --- getAllProjects function is unchanged ---
 exports.getAllProjects = async (req, res) => {
   try {
     const matchStage = {};
@@ -201,72 +203,27 @@ exports.getAllProjects = async (req, res) => {
     if (req.query.status) matchStage.status = req.query.status;
     if (req.query.skill) matchStage.requiredSkills = { $in: [new RegExp(req.query.skill, 'i')] };
     if (req.query.search) matchStage.$text = { $search: req.query.search };
-
     const projects = await Project.aggregate([
       { $match: matchStage },
-      {
-        $lookup: {
-          from: 'milestones',
-          localField: '_id',
-          foreignField: 'project',
-          as: 'milestonesData'
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'clientId',
-          foreignField: '_id',
-          as: 'clientInfo'
-        }
-      },
-      {
-        $addFields: {
-          totalMilestones: { $size: '$milestonesData' },
-          completedMilestones: {
-            $size: {
-              $filter: {
-                input: '$milestonesData',
-                as: 'milestone',
-                cond: { $eq: ['$$milestone.status', 'approved'] }
-              }
-            }
-          },
-          clientId: { $arrayElemAt: ['$clientInfo', 0] }
-        }
-      },
-      {
-        $project: {
-          milestonesData: 0,
-          clientInfo: 0
-        }
-      },
+      { $lookup: { from: 'milestones', localField: '_id', foreignField: 'project', as: 'milestonesData' } },
+      { $lookup: { from: 'users', localField: 'clientId', foreignField: '_id', as: 'clientInfo' } },
+      { $addFields: { totalMilestones: { $size: '$milestonesData' }, completedMilestones: { $size: { $filter: { input: '$milestonesData', as: 'milestone', cond: { $eq: ['$$milestone.status', 'approved'] } } } }, clientId: { $arrayElemAt: ['$clientInfo', 0] } } },
+      { $project: { milestonesData: 0, clientInfo: 0 } },
       { $sort: { createdAt: -1 } }
     ]);
-
-    res.status(200).json({
-      success: true,
-      count: projects.length,
-      projects,
-    });
+    res.status(200).json({ success: true, count: projects.length, projects });
   } catch (err) {
     console.error('❌ getAllProjects error:', err);
     res.status(500).json({ success: false, message: 'Server error while fetching projects.' });
   }
 };
 
+// --- getProjectById function is unchanged ---
 exports.getProjectById = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
       .populate('clientId', 'username email company')
-      .populate({ 
-        path: 'proposals', 
-        populate: { 
-          path: 'freelancerId', 
-          select: 'username email skills' 
-        } 
-      });
-      
+      .populate({ path: 'proposals', populate: { path: 'freelancerId', select: 'username email skills' } });
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found.' });
     }
@@ -277,30 +234,21 @@ exports.getProjectById = async (req, res) => {
   }
 };
 
+// --- acceptProposal function is unchanged ---
 exports.acceptProposal = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { proposalId, milestoneInputs } = req.body;
     const project = await Project.findById(req.params.id).session(session);
-    if (!project) {
-      return res.status(404).json({ success: false, message: 'Project not found.' });
-    }
-    if (!project.clientId.equals(req.user._id)) {
-      return res.status(403).json({ success: false, message: 'Not authorized to accept proposals for this project.' });
-    }
-    if (project.status !== 'open') {
-      return res.status(400).json({ success: false, message: 'This project is not open for proposals.' });
-    }
+    if (!project) { return res.status(404).json({ success: false, message: 'Project not found.' }); }
+    if (!project.clientId.equals(req.user._id)) { return res.status(403).json({ success: false, message: 'Not authorized to accept proposals for this project.' }); }
+    if (project.status !== 'open') { return res.status(400).json({ success: false, message: 'This project is not open for proposals.' }); }
     const proposal = await Proposal.findById(proposalId).session(session);
-    if (!proposal) {
-      return res.status(404).json({ success: false, message: 'Proposal not found.' });
-    }
+    if (!proposal) { return res.status(404).json({ success: false, message: 'Proposal not found.' }); }
     const totalAmount = proposal.bid.amount;
     const size = milestoneInputs.length;
-    if (!size || size < 1) {
-        throw new Error("Milestone details must be provided.");
-    }
+    if (!size || size < 1) { throw new Error("Milestone details must be provided."); }
     const remainder = 100 % size;
     const basePercentage = Math.floor(100 / size);
     const newMilestones = milestoneInputs.map((input, index) => {
@@ -308,9 +256,7 @@ exports.acceptProposal = async (req, res) => {
         const amount = Math.round((totalAmount * percentage)) / 100;
         return { project: project._id, title: input.title, description: input.description, amount: amount, status: 'pending' };
     });
-    
     await Milestone.insertMany(newMilestones, { session });
-
     proposal.status = 'accepted';
     await proposal.save({ session });
     await Proposal.updateMany({ projectId: project._id, _id: { $ne: proposalId } }, { $set: { status: 'declined' } }, { session });
@@ -327,4 +273,21 @@ exports.acceptProposal = async (req, res) => {
   } finally {
     session.endSession();
   }
+};
+
+// ✅ ADDED: New function for freelancers to get their projects
+exports.getFreelancerProjects = async (req, res) => {
+    try {
+        const freelancerId = req.user._id;
+        // Find projects where the freelancerId field matches the logged-in user's ID
+        const projects = await Project.find({ freelancerId: freelancerId })
+            .populate('clientId', 'username') // Show the client's name
+            .sort({ updatedAt: -1 });
+
+        res.status(200).json({ success: true, projects });
+
+    } catch (err) {
+        console.error('❌ getFreelancerProjects error:', err);
+        res.status(500).json({ success: false, message: 'Server error while fetching freelancer projects.' });
+    }
 };
