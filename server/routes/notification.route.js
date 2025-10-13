@@ -1,18 +1,13 @@
-// // server/routes/notification.route.js
 // const express = require('express');
 // const router = express.Router();
 // const Notification = require('../models/Notification');
-// const { authenticate, restrictTo } = require('../middlewares/authenticate'); 
+// const { authenticate } = require('../middlewares/authenticate'); 
 
-// /**
-//  * @desc Get unread notifications for the recipient (Client or Freelancer)
-//  * @route GET /api/notifications
-//  * @access Private (Both)
-//  */
 // router.get('/', authenticate, async (req, res) => {
 //     try {
 //         const notifications = await Notification.find({ recipientId: req.user._id })
-//             .populate('projectId', 'title') // Get project title
+//             // ✅ CHANGED: Populate now includes the project's status
+//             .populate('projectId', 'title status') 
 //             .sort({ createdAt: -1 })
 //             .limit(20);
 
@@ -23,11 +18,6 @@
 //     }
 // });
 
-// /**
-//  * @desc Mark a notification as read
-//  * @route POST /api/notifications/:id/read
-//  * @access Private (Recipient)
-//  */
 // router.post('/:id/read', authenticate, async (req, res) => {
 //     try {
 //         const notification = await Notification.findOneAndUpdate(
@@ -48,6 +38,8 @@
 
 // module.exports = router;
 // server/routes/notification.route.js
+// server/routes/notification.route.js
+// server/routes/notification.route.js
 const express = require('express');
 const router = express.Router();
 const Notification = require('../models/Notification');
@@ -55,11 +47,14 @@ const { authenticate } = require('../middlewares/authenticate');
 
 router.get('/', authenticate, async (req, res) => {
     try {
+        // --- ✅ FINAL VERSION: Simply populates the fields the frontend needs ---
         const notifications = await Notification.find({ recipientId: req.user._id })
-            // ✅ CHANGED: Populate now includes the project's status
-            .populate('projectId', 'title status') 
             .sort({ createdAt: -1 })
-            .limit(20);
+            .populate('projectId', 'title status _id') // Fetches the project's details
+            .populate({ 
+                path: 'proposalId', 
+                select: 'bid _id' // Fetches the proposal's bid details and its ID
+            });
 
         res.status(200).json({ success: true, notifications });
     } catch (err) {

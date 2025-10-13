@@ -97,15 +97,34 @@ const Notification = require('../models/Notification');
 exports.createProposal = async (req, res) => {
   try {
     const freelancerId = req.user._id;
-    const { projectId } = req.body;
+    const { projectId, bid, estimatedCompletionDate } = req.body;
 
     if (req.user.role !== 'freelancer') {
       return res.status(403).json({ success: false, message: 'Only freelancers can submit proposals.' });
     }
 
     const project = await Project.findById(projectId);
-    if (!project || project.status !== 'open') {
-      return res.status(404).json({ success: false, message: 'Project not found or not open for bidding.' });
+    if (!project) {
+        return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
+
+    if (project.status !== 'open') {
+        return res.status(400).json({ success: false, message: 'This project is no longer open for bidding.' });
+    }
+
+    if (bid.amount < project.budget.minimum || bid.amount > project.budget.maximum) {
+        return res.status(400).json({ 
+            success: false, 
+            message: `Your bid of ${bid.currency} ${bid.amount} is outside the project's budget range of ${project.budget.minimum} - ${project.budget.maximum}.` 
+        });
+    }
+    
+    // --- ✅ ADDED: Validation for estimated completion date ---
+    if (new Date(estimatedCompletionDate) > new Date(project.applicationDeadline)) {
+        return res.status(400).json({
+            success: false,
+            message: `Your estimated completion date cannot be after the project's application deadline of ${new Date(project.applicationDeadline).toLocaleDateString()}.`
+        });
     }
 
     const proposal = await Proposal.create({ ...req.body, freelancerId, status: 'submitted' });
@@ -115,7 +134,8 @@ exports.createProposal = async (req, res) => {
       await project.save();
     }
 
-    const clientMessage = `New bid received on your project: "${project.title}". Bid Amount: ${req.body.bid.amount} ${req.body.bid.currency}.`;
+    const clientMessage = `New ${bid.currency} ${bid.amount} bid from ${req.user.username} on "${project.title}".`;
+    
     await Notification.create({
       recipientId: project.clientId,
       proposalId: proposal._id,
@@ -123,6 +143,24 @@ exports.createProposal = async (req, res) => {
       message: clientMessage,
       type: 'new_bid',
     });
+
+    const otherProposals = await Proposal.find({
+        projectId: projectId,
+        freelancerId: { $ne: freelancerId },
+        'bid.amount': { $gt: bid.amount }
+    });
+
+    const freelancersToNotify = [...new Set(otherProposals.map(p => p.freelancerId.toString()))];
+
+    if (freelancersToNotify.length > 0) {
+        const outbidNotifications = freelancersToNotify.map(id => ({
+            recipientId: id,
+            projectId: projectId,
+            message: `A new, lower bid of ${bid.currency} ${bid.amount} has been placed on the project "${project.title}".`,
+            type: 'outbid'
+        }));
+        await Notification.create(outbidNotifications);
+    }
 
     res.status(201).json({ success: true, message: 'Proposal submitted successfully. Client notified.', proposal });
 
@@ -171,8 +209,7 @@ exports.approveProposal = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This project is no longer open for bidding.' });
     }
 
-    // Update project & proposal
-    project.freelancerId = proposal.freelancerId;
+    project.freelancer = proposal.freelancerId;
     project.finalAmount = proposal.bid.amount;
     project.status = 'in-progress';
     proposal.status = 'accepted';
@@ -182,14 +219,12 @@ exports.approveProposal = async (req, res) => {
       proposal.save({ session }),
     ]);
 
-    // Decline other proposals
     await Proposal.updateMany(
       { projectId: project._id, _id: { $ne: proposalId } },
       { $set: { status: 'declined' } },
       { session }
     );
 
-    // Notify freelancer
     await Notification.create([{
       recipientId: proposal.freelancerId,
       projectId: project._id,

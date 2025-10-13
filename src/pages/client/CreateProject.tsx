@@ -167,15 +167,14 @@ const CreateProject: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // --- CHANGE 1: Updated form state for budget range ---
   const [form, setForm] = useState({
     title: "",
     description: "",
     category: "",
     requiredSkills: "",
     experienceLevel: "",
-    budgetMinimum: "", // Changed from budgetAmount
-    budgetMaximum: "", // New field for maximum budget
+    budgetMinimum: "",
+    budgetMaximum: "",
     deadline: "",
   });
 
@@ -196,14 +195,8 @@ const CreateProject: React.FC = () => {
       return;
     }
     
-    // --- CHANGE 2: Added validation for budget range ---
     const minBudget = Number(form.budgetMinimum);
     const maxBudget = Number(form.budgetMaximum);
-
-    // if (maxBudget <= minBudget) {
-    //   alert("❌ Maximum budget must be greater than the minimum budget.");
-    //   return;
-    // }
 
     try {
       const res = await axios.post(
@@ -214,13 +207,11 @@ const CreateProject: React.FC = () => {
           category: form.category,
           requiredSkills: form.requiredSkills.split(",").map((s) => s.trim()).filter(s => s.length > 0),
           experienceLevel: form.experienceLevel,
-          
-          // --- CHANGE 3: Building the correct budget object ---
           budget: {
-            type: "fixed-price-range", // Correct enum value
-            minimum: minBudget,        // Use minimum from state
-            maximum: maxBudget,        // Use maximum from state
-            currency: "INR",           // Changed to match backend default
+            type: "fixed-price-range",
+            minimum: minBudget,
+            maximum: maxBudget,
+            currency: "INR",
           },
           applicationDeadline: new Date(form.deadline),
         },
@@ -231,7 +222,6 @@ const CreateProject: React.FC = () => {
 
       alert("✅ Project created successfully!");
 
-      // --- CHANGE 4: Resetting the new form state ---
       setForm({
         title: "",
         description: "",
@@ -246,7 +236,6 @@ const CreateProject: React.FC = () => {
       navigate("/client/projects");
     } catch (err: any) {
       console.error("Create project error:", err.response?.data || err);
-      // The enhanced error message from the backend will now be displayed here
       alert("❌ " + (err.response?.data?.message || "Error creating project."));
     }
   };
@@ -274,13 +263,17 @@ const CreateProject: React.FC = () => {
             {EXPERIENCE_OPTIONS.map(exp => <option key={exp.value} value={exp.value}>{exp.display}</option>)}
         </select>
         
-        {/* --- CHANGE 5: Replaced single budget input with two inputs for range --- */}
         <div className="flex space-x-4">
             <input name="budgetMinimum" type="number" value={form.budgetMinimum} onChange={handleChange} placeholder="Minimum Budget " className="border w-full p-2 rounded-md" required />
             <input name="budgetMaximum" type="number" value={form.budgetMaximum} onChange={handleChange} placeholder="Maximum Budget " className="border w-full p-2 rounded-md" required />
         </div>
         
-        <input name="deadline" type="date" value={form.deadline} onChange={handleChange} className="border w-full p-2 rounded-md" required />
+        {/* --- ✅ CHANGED: Added a label for clarity --- */}
+        <div>
+            <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 mb-1">Application Deadline</label>
+            <input id="deadline" name="deadline" type="date" value={form.deadline} onChange={handleChange} className="border w-full p-2 rounded-md" required />
+        </div>
+
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 w-full">Create Project</button>
       </form>
     </div>
