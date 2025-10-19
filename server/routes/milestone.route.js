@@ -6,8 +6,8 @@ const router = express.Router();
 // ✅ Import controllers safely
 const milestoneController = require('../controllers/milestone.controller.js');
 
-// ✅ FIX: Destructure authenticate from middlewares
-const { authenticate } = require('../middlewares/authenticate.js');
+// ✅ FIX: Changed the import path to the correct middleware file
+const { authenticate } = require('../middlewares/auth.middleware.js');
 
 // ✅ Destructure controller functions
 const { submitMilestone, reviewMilestone, getMilestonesForProject } = milestoneController;
@@ -20,4 +20,3 @@ router.patch('/:milestoneId/review', authenticate, reviewMilestone);
 console.log("--- Milestone routes defined: GET /project/:projectId, PATCH /:milestoneId/... ---");
 
 module.exports = router;
-

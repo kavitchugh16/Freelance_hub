@@ -1,6 +1,7 @@
 const express = require('express');
 const { registerClient, registerFreelancer, login, logout } = require('../controllers/auth.controller');
-const { authenticate, restrictTo } = require('../middlewares/authenticate'); 
+// ✅ FIX: Changed the import path to the correct middleware file
+const { authenticate } = require('../middlewares/auth.middleware.js'); 
 const User = require('../models/user.model'); // Ensure path is correct
 
 const router = express.Router();
@@ -20,10 +21,11 @@ router.post('/logout', logout);
 // Session check
 router.get('/session', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (!user) return res.status(404).json({ message: 'User data not found for valid token.' });
-    res.status(200).json({ user: user._doc });
-  } catch (error) {
+    // Note: The user object is already attached by the updated auth.middleware.js
+    // We just need to ensure the response format is correct.
+    res.status(200).json({ user: req.user });
+  } catch (error)
+ {
     console.error('Session retrieval error:', error);
     res.status(500).json({ message: 'Server error during session retrieval.' });
   }
