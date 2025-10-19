@@ -1,8 +1,8 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'secretkey';
+// ✅ Import the JWT_SECRET from our new config file
+const { JWT_SECRET, NODE_ENV } = require('../config/config.js');
 
 // --- Register Client ---
 exports.registerClient = async (req, res) => {
@@ -34,22 +34,44 @@ exports.registerFreelancer = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
-        const user = await User.findOne({ username });
-        if (!user) return res.status(404).json({ message: 'User not found' });
+        const user = await User.findOne({ username }).lean(); 
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-        const { password: pwd, ...userData } = user._doc;
+        const payload = {
+            id: user._id,
+            role: user.role,
+            username: user.username,
+            email: user.email
+        };
 
-        res.cookie('accessToken', token, { httpOnly: true }).status(200).json({ user: userData });
+        // ✅ Use the imported JWT_SECRET
+        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+
+        delete user.password;
+
+        res.cookie('accessToken', token, {
+            httpOnly: true,
+            secure: NODE_ENV === 'production', // ✅ Use the imported NODE_ENV
+            sameSite: 'strict'
+        }).status(200).json({ user });
+
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
+
 // --- Logout ---
 exports.logout = (req, res) => {
-    res.clearCookie('accessToken').status(200).json({ message: 'Logged out successfully' });
+    res.cookie('accessToken', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    }).status(200).json({ message: 'Logged out successfully' });
 };
