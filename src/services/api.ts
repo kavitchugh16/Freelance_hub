@@ -28,6 +28,7 @@ export const checkSession = () => {
   return api.get('/auth/session');
 };
 
+
 // === CHAT API ===
 // ... (getConversations, getMessages, getOrCreateConversation functions are here) ...
 export const getConversations = () => {
@@ -44,21 +45,23 @@ export const getOrCreateConversation = (recipientId: string) => {
 
 
 // === PROJECTS ===
-// --- ADD THIS NEW FUNCTION ---
-/**
- * Gets all projects (filtered by query)
- * @param query (e.g., "status=open")
- */
+// ... (getProjects, getProjectById functions are here) ...
 export const getProjects = (query: string = "") => {
   return api.get(`/projects?${query}`);
 };
-// -----------------------------
 
-/**
- * Gets a single project by its ID
- */
 export const getProjectById = (id: string) => {
   return api.get(`/projects/${id}`);
+};
+
+// === USERS ===
+// --- ADD THIS NEW FUNCTION ---
+/**
+ * Searches for users by username or full name
+ * @param query The search term
+ */
+export const searchUsers = (query: string) => {
+  return api.get(`/users/search?q=${query}`);
 };
 
 // Export the instance if you need to use it directly

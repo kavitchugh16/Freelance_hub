@@ -194,3 +194,48 @@
   height: 100%;
   color: #777;
 }
+
+/* src/components/dashboard/ChatWindow.css */
+/* ... (all your existing styles are here) ... */
+/* ... (.chat-container, .conversation-list, etc.) ... */
+
+
+/* --- ADD THESE NEW STYLES --- */
+
+/* Make sidebar scrollable */
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  border-right: 1px solid #ddd;
+  background: #f9f9f9;
+  /* Remove fixed height, let flex-box handle it */
+}
+
+/* Search Bar */
+.search-bar-container {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ddd;
+  background: #f9f9f9;
+}
+
+.chat-search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 16px;
+  font-size: 0.9rem;
+}
+
+/* Lists for search results and conversations */
+.search-results-list, .conversation-items-list {
+  flex-grow: 1; /* This makes the list fill the space */
+  overflow-y: auto; /* This makes the list scrollable */
+}
+
+.search-info {
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
