@@ -1,59 +1,3 @@
-// import React from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { FaUser, FaWallet, FaProjectDiagram, FaBell } from 'react-icons/fa';
-
-// const ClientDashboard: React.FC = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//       <div
-//         className="bg-indigo-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-indigo-200"
-//         onClick={() => navigate('/client/profile')}
-//       >
-//         <FaUser size={40} className="mb-2 text-indigo-600" />
-//         <h2 className="text-lg font-bold">Profile</h2>
-//       </div>
-
-//       <div
-//         className="bg-green-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-green-200"
-//         onClick={() => navigate('/client/wallet')}
-//       >
-//         <FaWallet size={40} className="mb-2 text-green-600" />
-//         <h2 className="text-lg font-bold">Wallet</h2>
-//       </div>
-
-//       <div
-//         className="bg-yellow-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-yellow-200"
-//         onClick={() => navigate('/client/projects/create')}
-//       >
-//         <FaProjectDiagram size={40} className="mb-2 text-yellow-600" />
-//         <h2 className="text-lg font-bold">Create Project</h2>
-//       </div>
-
-//       {/* ⬅️ CHANGE: Dedicated Notification Card */}
-//       <div
-//         className="bg-pink-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-pink-200"
-//         onClick={() => navigate('/client/notifications')} // ⬅️ NEW Route for Notifications
-//       >
-//         <FaBell size={40} className="mb-2 text-pink-600" />
-//         <h2 className="text-lg font-bold">Notifications</h2> {/* ⬅️ Renamed */}
-//       </div>
-
-//       {/* ➡️ NEW: Re-add a card for My Projects/Project List */}
-//       <div
-//         className="bg-blue-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-blue-200"
-//         onClick={() => navigate('/client/projects')}
-//       >
-//         <FaProjectDiagram size={40} className="mb-2 text-blue-600" />
-//         <h2 className="text-lg font-bold">My Projects</h2>
-//       </div>
-
-//     </div>
-//   );
-// };
-
-// export default ClientDashboard;
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -61,7 +5,8 @@ import {
   FaWallet, 
   FaPlus,
   FaFolderOpen,
-  FaBell
+  FaBell,
+  FaComment // Icon for Messages
 } from 'react-icons/fa';
 
 const ClientDashboard: React.FC = () => {
@@ -105,13 +50,22 @@ const ClientDashboard: React.FC = () => {
       delay: 'delay-300'
     },
     {
+      title: 'Messages',
+      description: 'View your conversations',
+      icon: FaComment,
+      color: 'from-sky-500 to-blue-600',
+      hoverColor: 'hover:from-sky-600 hover:to-blue-700',
+      route: '/messages', // Links to the messages page
+      delay: 'delay-400'
+    },
+    {
       title: 'Notifications',
       description: 'View your notifications',
       icon: FaBell,
       color: 'from-rose-500 to-pink-600',
       hoverColor: 'hover:from-rose-600 hover:to-pink-700',
       route: '/client/notifications',
-      delay: 'delay-400'
+      delay: 'delay-500' 
     }
   ];
 
@@ -127,7 +81,7 @@ const ClientDashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Dashboard Cards Grid */}
+      {/* Dashboard Cards Grid (Updated to lg:grid-cols-3) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => {
           const IconComponent = card.icon;

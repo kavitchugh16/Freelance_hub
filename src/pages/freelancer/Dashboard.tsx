@@ -1,48 +1,3 @@
-// import React from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { FaUser, FaWallet, FaProjectDiagram, FaBell } from 'react-icons/fa';
-
-// const FreelancerDashboard = () => {
-//   const navigate = useNavigate();
-
-//   return (
-//     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-//       <div
-//         className="bg-indigo-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-indigo-200"
-//         onClick={() => navigate('/freelancer/profile')}
-//       >
-//         <FaUser size={40} className="mb-2 text-indigo-600" />
-//         <h2 className="text-lg font-bold">Profile</h2>
-//       </div>
-
-//       <div
-//         className="bg-green-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-green-200"
-//         onClick={() => navigate('/freelancer/wallet')}
-//       >
-//         <FaWallet size={40} className="mb-2 text-green-600" />
-//         <h2 className="text-lg font-bold">Wallet</h2>
-//       </div>
-
-//       <div
-//         className="bg-yellow-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-yellow-200"
-//         onClick={() => navigate('/freelancer/browse-projects')} // <-- Add leading slash here
-//       >
-//         <FaProjectDiagram size={40} className="mb-2 text-yellow-600" />
-//         <h2 className="text-lg font-bold">Browse Projects</h2>
-//       </div>
-
-//       <div
-//         className="bg-pink-100 p-6 rounded-lg shadow-md flex flex-col items-center cursor-pointer hover:bg-pink-200"
-//         onClick={() => navigate('/freelancer/notifications')}
-//       >
-//         <FaBell size={40} className="mb-2 text-pink-600" />
-//         <h2 className="text-lg font-bold">Notifications</h2>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FreelancerDashboard;
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -50,7 +5,8 @@ import {
   FaWallet, 
   FaSearch,
   FaBriefcase,
-  FaBell
+  FaBell,
+  FaComment // Icon for Messages
 } from 'react-icons/fa';
 
 const FreelancerDashboard: React.FC = () => {
@@ -85,13 +41,22 @@ const FreelancerDashboard: React.FC = () => {
       delay: 'delay-200'
     },
     {
+      title: 'Messages',
+      description: 'View your conversations',
+      icon: FaComment,
+      color: 'from-sky-500 to-blue-600',
+      hoverColor: 'hover:from-sky-600 hover:to-blue-700',
+      route: '/messages', // Links to the messages page
+      delay: 'delay-300'
+    },
+    {
       title: 'Wallet',
       description: 'View earnings & payments',
       icon: FaWallet,
       color: 'from-green-500 to-emerald-600',
       hoverColor: 'hover:from-green-600 hover:to-emerald-700',
       route: '/freelancer/wallet',
-      delay: 'delay-300'
+      delay: 'delay-400'
     },
     {
       title: 'Notifications',
@@ -100,7 +65,7 @@ const FreelancerDashboard: React.FC = () => {
       color: 'from-rose-500 to-pink-600',
       hoverColor: 'hover:from-rose-600 hover:to-pink-700',
       route: '/freelancer/notifications',
-      delay: 'delay-400'
+      delay: 'delay-500'
     }
   ];
 
@@ -116,8 +81,8 @@ const FreelancerDashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Dashboard Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      {/* Dashboard Cards Grid (Updated to lg:grid-cols-6) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
         {dashboardCards.map((card) => {
           const IconComponent = card.icon;
           return (
@@ -149,80 +114,12 @@ const FreelancerDashboard: React.FC = () => {
           );
         })}
       </div>
-
-      {/* Recent Activity & Opportunities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
-        {/* Recent Activity */}
-        <div className="animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-          <div className="dashboard-card">
-            <div className="space-y-4">
-              {[
-                { action: 'Project "Mobile App Design" completed', time: '1 hour ago', status: 'success' },
-                { action: 'New proposal submitted for "E-commerce Site"', time: '3 hours ago', status: 'info' },
-                { action: 'Payment of $1,200 received', time: '1 day ago', status: 'success' },
-                { action: 'Client left 5-star review', time: '2 days ago', status: 'success' }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className={`w-3 h-3 rounded-full ${
-                    activity.status === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                  } animate-pulse`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Opportunities */}
-        <div className="animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Featured Opportunities</h2>
-          <div className="space-y-4">
-            {[
-              { 
-                title: 'React Native Mobile App', 
-                budget: '$3,000 - $5,000', 
-                skills: ['React Native', 'Firebase', 'UI/UX'],
-                timeLeft: '2 days left'
-              },
-              { 
-                title: 'E-commerce Website', 
-                budget: '$2,500 - $4,000', 
-                skills: ['React', 'Node.js', 'MongoDB'],
-                timeLeft: '5 days left'
-              },
-              { 
-                title: 'Logo Design Package', 
-                budget: '$500 - $800', 
-                skills: ['Adobe Illustrator', 'Branding', 'Design'],
-                timeLeft: '1 day left'
-              }
-            ].map((project, index) => (
-              <div key={index} className="dashboard-card hover:shadow-medium transition-all duration-300 cursor-pointer">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-gray-900">{project.title}</h3>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                      {project.timeLeft}
-                    </span>
-                  </div>
-                  <p className="text-sm font-semibold text-green-600">{project.budget}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.skills.map((skill, skillIndex) => (
-                      <span key={skillIndex} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      
+      {/* You can add the other sections from your FreelancerDashboard.jsx 
+        (like "My Active Projects" and "My Bids") here if you want 
+        this to be the main dashboard page.
+      */}
+      
     </div>
   );
 };

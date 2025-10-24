@@ -1,202 +1,4 @@
-// // import React, { useEffect, useState } from "react";
-// // import axios from "axios";
-// // import { useNavigate } from "react-router-dom"; // ⬅️ NEW: Import useNavigate
-
-// // interface Project {
-// //   _id: string;
-// //   title: string;
-// //   description: string;
-// //   category: string;
-// //   budget: { amount: number; currency: string };
-// //   experienceLevel?: string;
-// //   requiredSkills?: string[];
-// //   applicationDeadline?: string;
-// // }
-
-// // const BrowseProjects: React.FC = () => {
-// //   const navigate = useNavigate(); // ⬅️ NEW: Initialize navigate
-// //   const [projects, setProjects] = useState<Project[]>([]);
-// //   const [loading, setLoading] = useState<boolean>(true);
-// //   const [error, setError] = useState<string | null>(null);
-
-// //   useEffect(() => {
-// //     const fetchProjects = async () => {
-// //       try {
-// //         const res = await axios.get("http://localhost:8080/api/projects?status=open", {
-// //           withCredentials: true, // send cookies if backend uses them
-// //         });
-
-// //         // Ensure you grab the nested 'projects' array, as per your controller logic
-// //         setProjects(res.data.projects || res.data); 
-// //       } catch (err: any) {
-// //         console.error("Error fetching projects:", err);
-// //         setError("Failed to fetch projects. Please try again.");
-// //       } finally {
-// //         setLoading(false);
-// //       }
-// //     };
-
-// //     fetchProjects();
-// //   }, []);
-
-// //   // Handlers
-// //   const handleBidClick = (projectId: string) => {
-// //     // ⬅️ NEW: Navigate to the proposal submission page, passing the project ID
-// //     navigate(`/freelancer/submit-proposal/${projectId}`);
-// //   };
-
-// //   if (loading) return <p className="text-center mt-8">Loading projects...</p>;
-// //   if (error) return <p className="text-center mt-8 text-red-600">{error}</p>;
-
-// //   if (projects.length === 0)
-// //     return <p className="text-center mt-8 text-gray-600">No open projects available.</p>;
-
-// //   return (
-// //     <div className="p-6">
-// //       <h2 className="text-2xl font-bold mb-6 text-green-700">Available Projects</h2>
-// //       {projects.map((p) => (
-// //         <div 
-// //             key={p._id} 
-// //             className="border rounded-md p-4 mb-4 bg-white shadow-md flex justify-between items-center transition hover:shadow-lg" // Added flex for button positioning
-// //         >
-// //             {/* Project Details */}
-// //             <div className="flex-grow">
-// //               <h3 className="text-xl font-semibold text-gray-800">{p.title}</h3>
-// //               <p className="mt-1 text-gray-600">{p.description}</p>
-// //               <div className="mt-2 text-sm space-y-1">
-// //                 <p className="font-medium text-blue-700">
-// //                   Budget: ${p.budget?.amount} {p.budget?.currency}
-// //                 </p>
-// //                 <p className="text-gray-500">Category: {p.category}</p>
-// //                 {p.experienceLevel && <p className="text-gray-500">Experience: {p.experienceLevel}</p>}
-// //                 {p.requiredSkills && p.requiredSkills.length > 0 && (
-// //                   <p className="text-gray-500">
-// //                     Skills: <span className="text-indigo-600 font-medium">{p.requiredSkills.join(", ")}</span>
-// //                   </p>
-// //                 )}
-// //                 {p.applicationDeadline && (
-// //                   <p className="text-red-500">
-// //                     Deadline: {new Date(p.applicationDeadline).toLocaleDateString()}
-// //                   </p>
-// //                 )}
-// //               </div>
-// //             </div>
-            
-// //             {/* ⬅️ NEW: Place Bid Button */}
-// //             <div className="ml-6 flex-shrink-0">
-// //                 <button
-// //                     onClick={() => handleBidClick(p._id)}
-// //                     className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 shadow-md"
-// //                 >
-// //                     Place Bid
-// //                 </button>
-// //             </div>
-// //         </div>
-// //       ))}
-// //     </div>
-// //   );
-// // };
-
-// // export default BrowseProjects;
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { useNavigate } from "react-router-dom";
-
-// // ✅ CHANGED: Updated the Project interface for the new budget structure
-// interface Project {
-//   _id: string;
-//   title: string;
-//   description: string;
-//   category: string;
-//   budget: { 
-//     minimum: number; 
-//     maximum: number;
-//     currency: string 
-//   };
-//   experienceLevel?: string;
-//   requiredSkills?: string[];
-//   applicationDeadline?: string;
-// }
-
-// const BrowseProjects: React.FC = () => {
-//   const navigate = useNavigate();
-//   const [projects, setProjects] = useState<Project[]>([]);
-//   const [loading, setLoading] = useState<boolean>(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   useEffect(() => {
-//     const fetchProjects = async () => {
-//       try {
-//         const res = await axios.get("http://localhost:8080/api/projects?status=open", {
-//           withCredentials: true,
-//         });
-//         setProjects(res.data.projects || res.data); 
-//       } catch (err: any) {
-//         console.error("Error fetching projects:", err);
-//         setError("Failed to fetch projects. Please try again.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchProjects();
-//   }, []);
-
-//   const handleBidClick = (projectId: string) => {
-//     navigate(`/freelancer/submit-proposal/${projectId}`);
-//   };
-
-//   if (loading) return <p className="text-center mt-8">Loading projects...</p>;
-//   if (error) return <p className="text-center mt-8 text-red-600">{error}</p>;
-//   if (projects.length === 0) return <p className="text-center mt-8 text-gray-600">No open projects available.</p>;
-
-//   return (
-//     <div className="p-6">
-//       <h2 className="text-2xl font-bold mb-6 text-green-700">Available Projects</h2>
-//       {projects.map((p) => (
-//         <div 
-//             key={p._id} 
-//             className="border rounded-md p-4 mb-4 bg-white shadow-md flex justify-between items-center transition hover:shadow-lg"
-//         >
-//           <div className="flex-grow">
-//             <h3 className="text-xl font-semibold text-gray-800">{p.title}</h3>
-//             <p className="mt-1 text-gray-600">{p.description}</p>
-//             <div className="mt-2 text-sm space-y-1">
-//               {/* ✅ CHANGED: Displaying the budget range correctly */}
-//               <p className="font-medium text-blue-700">
-//                 Budget: {p.budget?.minimum} - {p.budget?.maximum} {p.budget?.currency}
-//               </p>
-//               <p className="text-gray-500">Category: {p.category}</p>
-//               {p.experienceLevel && <p className="text-gray-500">Experience: {p.experienceLevel}</p>}
-//               {p.requiredSkills && p.requiredSkills.length > 0 && (
-//                 <p className="text-gray-500">
-//                   Skills: <span className="text-indigo-600 font-medium">{p.requiredSkills.join(", ")}</span>
-//                 </p>
-//               )}
-//               {p.applicationDeadline && (
-//                 <p className="text-red-500">
-//                   Deadline: {new Date(p.applicationDeadline).toLocaleDateString()}
-//                 </p>
-//               )}
-//             </div>
-//           </div>
-            
-//           <div className="ml-6 flex-shrink-0">
-//               <button
-//                   onClick={() => handleBidClick(p._id)}
-//                   className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 shadow-md"
-//               >
-//                   Place Bid
-//               </button>
-//           </div>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// };
-
-// export default BrowseProjects;
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
     FaSearch,
@@ -209,6 +11,7 @@ import {
     FaArrowRight,
     FaSpinner
 } from "react-icons/fa";
+import { getProjects } from "../../services/api"; // IMPORT from your api.ts file
 
 // --- TypeScript Interface ---
 interface Project {
@@ -224,12 +27,13 @@ interface Project {
     experienceLevel?: string;
     requiredSkills?: string[];
     applicationDeadline?: string;
-    client?: {
+    client?: { // This should be populated from your 'getProjects' controller
+        _id: string;
         username: string;
         country?: string;
     };
     createdAt?: string;
-    proposalsCount?: number;
+    proposalsCount?: number; // You may need to add this to your backend aggregation
 }
 
 // --- Component ---
@@ -249,10 +53,17 @@ const BrowseProjects: React.FC = () => {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const res = await axios.get("http://localhost:8080/api/projects?status=open", {
-                    withCredentials: true,
-                });
-                setProjects(res.data.projects || res.data);
+                // USE THE NEW API FUNCTION
+                const res = await getProjects("status=open"); 
+                
+                // Your controller populates 'clientId'
+                // Let's rename it to 'client' to match the interface
+                const projectsWithClient = res.data.projects.map((p: any) => ({
+                    ...p,
+                    client: p.clientId // Rename clientId to client
+                }));
+                setProjects(projectsWithClient || []);
+
             } catch (err: any) {
                 console.error("Error fetching projects:", err);
                 setError("Failed to fetch projects. Please try again.");
@@ -268,6 +79,7 @@ const BrowseProjects: React.FC = () => {
         navigate(`/freelancer/submit-proposal/${projectId}`);
     };
 
+    // Filter and Sort Logic
     const filteredProjects = projects.filter(project => {
         const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             project.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -292,6 +104,7 @@ const BrowseProjects: React.FC = () => {
         }
     });
 
+    // --- RENDER ---
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 flex items-center justify-center">
@@ -317,6 +130,66 @@ const BrowseProjects: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 p-6">
+            
+            {/* --- ADDED STYLE BLOCK TO FIX ERRORS --- */}
+            <style>{`
+                .dashboard-card {
+                  background-color: white;
+                  border-radius: 0.75rem;
+                  padding: 1.5rem;
+                  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.07);
+                  transition: all 0.3s ease-in-out;
+                }
+                .dashboard-card:hover {
+                  transform: translateY(-5px);
+                  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.1);
+                }
+                .gradient-text {
+                  background: -webkit-linear-gradient(45deg, #3b82f6, #10b981);
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                }
+                .text-shadow {
+                  text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+                }
+                @keyframes fadeIn {
+                  from { opacity: 0; transform: translateY(10px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes scaleIn {
+                  from { opacity: 0; transform: scale(0.95); }
+                  to { opacity: 1; transform: scale(1); }
+                }
+                .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+                .animate-scale-in { animation: scaleIn 0.5s ease-out forwards; }
+                .button-primary {
+                  background-color: #10b981; /* emerald-500 */
+                  color: white;
+                  padding: 0.6rem 1.25rem;
+                  border-radius: 0.5rem;
+                  font-weight: 600;
+                  box-shadow: 0 2px 4px 0 rgba(0,0,0,0.1);
+                  transition: all 0.2s ease-in-out;
+                }
+                .button-primary:hover {
+                  background-color: #059669; /* emerald-600 */
+                }
+                .button-secondary {
+                  background-color: #f3f4f6; /* gray-100 */
+                  color: #374151; /* gray-700 */
+                  padding: 0.6rem 1.25rem;
+                  border-radius: 0.5rem;
+                  font-weight: 600;
+                  border: 1px solid #e5e7eb; /* gray-200 */
+                  transition: all 0.2s ease-in-out;
+                }
+                .button-secondary:hover {
+                  background-color: #e5e7eb; /* gray-200 */
+                }
+            `}</style>
+            {/* --- END OF STYLE BLOCK --- */}
+
+
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8 animate-fade-in">
@@ -367,6 +240,8 @@ const BrowseProjects: React.FC = () => {
                             ))}
                         </select>
 
+                        // ... inside your return statement ...
+
                         {/* Sort */}
                         <select
                             value={sortBy}
@@ -376,8 +251,11 @@ const BrowseProjects: React.FC = () => {
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
                             <option value="budget-high">Budget: High to Low</option>
+                            
+                            {/* THIS IS THE LINE WITH THE TYPO: */}
                             <option value="budget-low">Budget: Low to High</option>
                         </select>
+// ...
                     </div>
                 </div>
 
@@ -412,7 +290,7 @@ const BrowseProjects: React.FC = () => {
                                 key={project._id}
                                 className="dashboard-card group cursor-pointer animate-scale-in"
                                 style={{ animationDelay: `${index * 50}ms` }}
-                                onClick={() => navigate(`/project/${project._id}`)}
+                                onClick={() => navigate(`/project/${project._id}`)} // This is the link
                             >
                                 <div className="space-y-4 flex flex-col h-full">
                                     {/* Header */}
@@ -482,7 +360,8 @@ const BrowseProjects: React.FC = () => {
                                         {project.client && (
                                             <div className="flex items-center space-x-2 text-sm text-gray-600">
                                                 <FaUser className="h-3 w-3" />
-                                                <span>by {project.client.username}</span>
+                                                {/* Use client.username, not client.client.username */}
+                                                <span>by {project.client.username}</span> 
                                                 {project.client.country && (
                                                     <>
                                                         <span className="text-gray-300">•</span>
@@ -529,5 +408,3 @@ const BrowseProjects: React.FC = () => {
 };
 
 export default BrowseProjects;
-
-
