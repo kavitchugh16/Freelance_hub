@@ -7,20 +7,41 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node & build artifacts
+node_modules/
+dist/
+dist-ssr/
 *.local
+build/
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+.vscode/
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Environment & runtime
 .env
+*.env
 .bolt
+
+# Python virtual environments
+.venv/
+venv/
+chatbot/.venv/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Flask session or history files
+chatbot/.flask_session/
+chatbot/history/
+*.pkl
+
+# OS junk
+Thumbs.db
