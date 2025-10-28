@@ -35,6 +35,7 @@ import MessagesPage from './pages/Messages'; // Adjust path if you placed it els
 // Components
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import Chatbot from './components/Chatbot';
 
 
 import ProjectDetails from './pages/ProjectDetails';
@@ -46,6 +47,7 @@ const Layout = () => (
       <Outlet />
     </main>
     <Footer />
+    <Chatbot />
   </div>
 );
 

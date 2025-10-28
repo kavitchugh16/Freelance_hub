@@ -115,30 +115,6 @@ const ClientDashboard: React.FC = () => {
         })}
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="mt-12 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-        <div className="dashboard-card">
-          <div className="space-y-4">
-            {[
-              { action: 'Project "E-commerce Website" completed', time: '2 hours ago', status: 'success' },
-              { action: 'New proposal received for "Mobile App"', time: '4 hours ago', status: 'info' },
-              { action: 'Payment of $2,500 processed', time: '1 day ago', status: 'success' },
-              { action: 'Project "Logo Design" started', time: '2 days ago', status: 'info' }
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className={`w-3 h-3 rounded-full ${
-                  activity.status === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                } animate-pulse`}></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                  <p className="text-xs text-gray-500">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
