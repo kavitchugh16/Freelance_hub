@@ -15,6 +15,14 @@ const Chatbot: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Draggable state
+  const [position, setPosition] = useState({ x: window.innerWidth - 76, y: window.innerHeight / 2 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [hasMoved, setHasMoved] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,6 +37,149 @@ const Chatbot: React.FC = () => {
       loadGreeting();
     }
   }, [isOpen]);
+
+  // Load position from localStorage on mount
+  useEffect(() => {
+    const savedPosition = localStorage.getItem('chatbotPosition');
+    if (savedPosition) {
+      try {
+        const { x, y } = JSON.parse(savedPosition);
+        setPosition({ x, y });
+      } catch (error) {
+        console.error('Error loading chatbot position:', error);
+      }
+    }
+  }, []);
+
+  // Save position to localStorage when it changes
+  useEffect(() => {
+    if (!isDragging) {
+      localStorage.setItem('chatbotPosition', JSON.stringify(position));
+    }
+  }, [position, isDragging]);
+
+  // Handle window resize to keep button within bounds
+  useEffect(() => {
+    const handleResize = () => {
+      const newWidth = window.innerWidth;
+      const newHeight = window.innerHeight;
+      setWindowSize({ width: newWidth, height: newHeight });
+      setPosition(prev => ({
+        x: Math.min(prev.x, newWidth - 30),
+        y: Math.min(prev.y, newHeight - 30)
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, []);
+
+  // Mouse event handlers for dragging - optimized for smooth performance
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const currentDragPos = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return; // Only handle left mouse button
+    
+    const button = buttonRef.current;
+    if (!button) return;
+    
+    const buttonRect = button.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    
+    // Calculate offset from mouse to button center
+    const offsetX = startX - (buttonRect.left + buttonRect.width / 2);
+    const offsetY = startY - (buttonRect.top + buttonRect.height / 2);
+    
+    dragStartPos.current = { x: startX, y: startY };
+    currentDragPos.current = { x: position.x, y: position.y };
+    
+    setIsDragging(true);
+    setHasMoved(false);
+    setDragOffset({ x: offsetX, y: offsetY });
+    
+    // Add smooth transition removal during drag for better performance
+    button.style.transition = 'none';
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      // Mark that mouse has moved if moved more than 3px (to distinguish drag from click)
+      const moveDelta = Math.abs(e.clientX - dragStartPos.current.x) + Math.abs(e.clientY - dragStartPos.current.y);
+      if (moveDelta > 3) {
+        setHasMoved(true);
+      }
+      
+      // Calculate new position
+      let newX = e.clientX - offsetX;
+      let newY = e.clientY - offsetY;
+      
+      // Constrain to viewport bounds
+      const buttonSize = 60;
+      newX = Math.max(buttonSize / 2, Math.min(window.innerWidth - buttonSize / 2, newX));
+      newY = Math.max(buttonSize / 2, Math.min(window.innerHeight - buttonSize / 2, newY));
+      
+      currentDragPos.current = { x: newX, y: newY };
+      
+      // Use requestAnimationFrame for smooth updates
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+      }
+      
+      rafId.current = requestAnimationFrame(() => {
+        if (button) {
+          // Direct DOM manipulation for smoother performance
+          button.style.left = `${newX}px`;
+          button.style.top = `${newY}px`;
+        }
+      });
+    };
+
+    const handleMouseUp = () => {
+      // Cancel any pending animation frame
+      if (rafId.current !== null) {
+        cancelAnimationFrame(rafId.current);
+        rafId.current = null;
+      }
+      
+      // Restore transition
+      if (button) {
+        button.style.transition = '';
+      }
+      
+      // Update React state with final position
+      setPosition(currentDragPos.current);
+      setIsDragging(false);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      
+      // Reset hasMoved after a short delay to allow onClick to check it
+      setTimeout(() => setHasMoved(false), 10);
+      
+      // Remove event listeners
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    // Add event listeners
+    document.addEventListener('mousemove', handleMouseMove, { passive: false });
+    document.addEventListener('mouseup', handleMouseUp, { once: true });
+  };
 
   const loadGreeting = async () => {
     try {
@@ -102,18 +253,30 @@ const Chatbot: React.FC = () => {
     <>
       {/* Chatbot Toggle Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-1/2 right-4 transform -translate-y-1/2 bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 z-[9999] group hover:scale-110 border-2 border-white sm:right-6"
-        title="Open AI Chatbot - Get bid predictions and assistance"
+        ref={buttonRef}
+        onClick={(e) => {
+          // Only toggle if mouse hasn't moved (user clicked, not dragged)
+          if (!hasMoved && !isDragging) {
+            setIsOpen(!isOpen);
+          }
+        }}
+        onMouseDown={handleMouseDown}
+        className={`fixed bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl z-[9999] group border-2 border-white ${
+          isDragging ? 'cursor-grabbing scale-105' : 'cursor-grab hover:scale-110'
+        }`}
+        title="Drag to move • Click to open AI Chatbot"
         style={{ 
           boxShadow: '0 10px 25px rgba(59, 130, 246, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(10px)',
-          minWidth: '60px',
-          minHeight: '60px',
+          width: '60px',
+          height: '60px',
           position: 'fixed',
-          right: '16px',
-          top: '50%',
-          transform: 'translateY(-50%)'
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transform: 'translate(-50%, -50%)',
+          touchAction: 'none',
+          willChange: isDragging ? 'transform, left, top' : 'auto',
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out, box-shadow 0.2s ease-out'
         }}
       >
         {isOpen ? (
@@ -134,18 +297,33 @@ const Chatbot: React.FC = () => {
       </button>
 
       {/* Chatbot Window */}
-      {isOpen && (
-        <div className="fixed top-1/2 right-20 transform -translate-y-1/2 w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9998] flex flex-col overflow-hidden sm:right-24"
-             style={{
-               boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-               backdropFilter: 'blur(10px)',
-               position: 'fixed',
-               right: '80px',
-               top: '50%',
-               transform: 'translateY(-50%)',
-               maxWidth: 'calc(100vw - 100px)',
-               width: 'min(384px, calc(100vw - 100px))'
-             }}>
+      {isOpen && (() => {
+        const windowWidth = 384;
+        const windowHeight = 500;
+        // Calculate position relative to button, but keep within viewport
+        let windowX = position.x - 200; // Offset to the left of button
+        let windowY = position.y;
+        
+        // Keep window within viewport bounds
+        if (windowX < windowWidth / 2) windowX = windowWidth / 2;
+        if (windowX > windowSize.width - windowWidth / 2) windowX = windowSize.width - windowWidth / 2;
+        if (windowY < windowHeight / 2) windowY = windowHeight / 2;
+        if (windowY > windowSize.height - windowHeight / 2) windowY = windowSize.height - windowHeight / 2;
+        
+        return (
+          <div className="fixed w-96 h-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[9998] flex flex-col overflow-hidden"
+               style={{
+                 boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+                 backdropFilter: 'blur(10px)',
+                 position: 'fixed',
+                 left: `${windowX}px`,
+                 top: `${windowY}px`,
+                 transform: 'translate(-50%, -50%)',
+                 maxWidth: 'calc(100vw - 40px)',
+                 width: 'min(384px, calc(100vw - 40px))',
+                 maxHeight: 'calc(100vh - 40px)',
+                 height: 'min(500px, calc(100vh - 40px))'
+               }}>
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -248,7 +426,8 @@ const Chatbot: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
   );
 };
