@@ -81,45 +81,39 @@ const FreelancerDashboard: React.FC = () => {
         </p>
       </div>
 
-      {/* Dashboard Cards Grid (Updated to lg:grid-cols-6) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
+      {/* Dashboard Cards Grid - Improved Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {dashboardCards.map((card) => {
           const IconComponent = card.icon;
           return (
             <div
               key={card.title}
-              className={`dashboard-card group cursor-pointer animate-scale-in ${card.delay}`}
+              className={`dashboard-card group cursor-pointer animate-scale-in ${card.delay} min-h-[200px] flex flex-col`}
               onClick={() => navigate(card.route)}
             >
-              <div className="flex flex-col items-center text-center space-y-4">
+              <div className="flex flex-col h-full items-center text-center space-y-6 py-2">
                 {/* Icon with gradient background */}
-                <div className={`p-4 rounded-2xl bg-gradient-to-r ${card.color} ${card.hoverColor} transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                  <IconComponent size={32} className="text-white" />
+                <div className={`p-5 rounded-2xl bg-gradient-to-r ${card.color} ${card.hoverColor} transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg`}>
+                  <IconComponent size={36} className="text-white" />
                 </div>
                 
                 {/* Content */}
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
+                <div className="space-y-2 flex-grow flex flex-col justify-center">
+                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
                     {card.title}
                   </h3>
-                  <p className="text-sm text-gray-600 group-hover:text-gray-500 transition-colors">
+                  <p className="text-sm text-gray-600 group-hover:text-gray-500 transition-colors px-4">
                     {card.description}
                   </p>
                 </div>
                 
                 {/* Hover indicator */}
-                <div className="w-0 group-hover:w-full h-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300 rounded-full"></div>
+                <div className="w-0 group-hover:w-3/4 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300 rounded-full"></div>
               </div>
             </div>
           );
         })}
       </div>
-      
-      {/* You can add the other sections from your FreelancerDashboard.jsx 
-        (like "My Active Projects" and "My Bids") here if you want 
-        this to be the main dashboard page.
-      */}
-      
     </div>
   );
 };
